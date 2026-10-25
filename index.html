@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lily Path</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -222,6 +226,10 @@ details.sc ol{margin:8px 0 0;padding-left:1.3em;display:grid;gap:6px}
 .pv .bad{color:var(--danger)}.pv .warn{color:var(--pop);cursor:pointer;font-weight:700}.pv .good{color:var(--leader);font-weight:700;margin:6px 0 0}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
+
+<style>html,body{margin:0}button{font:inherit;color:inherit;cursor:pointer}</style>
+</head>
+<body>
 <header class="top chrome">
   <div class="top-in">
     <div class="brand">Lily Path <small id="brandSub">PE lesson deck</small></div>
@@ -492,7 +500,7 @@ try{ const o = JSON.parse(localStorage.getItem(KEY)||"null"); if(o){ for(const k
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify({lessonId:S.lessonId,grade:S.grade,idx:S.idx,script:S.script,level:S.level,storyOnly:S.storyOnly,wstate:S.wstate,runId:S.runId})); }catch(e){} }
 
 /* ---------- data cache ---------- */
-const LIB = { lessons:{ oct22:BUILTIN }, res:{}, runs:{}, settings:{} };
+const LIB = { lessons:{ oct22:BUILTIN }, routines:{}, res:{}, runs:{}, settings:{} };
 const Img = { urls:{}, ids:{} };
 const Media = { urls:{} };
 
@@ -522,8 +530,8 @@ async function blobAll(store){ const db=await idbOpen(); return new Promise((res
 async function blobPut(store,k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(store,"readwrite"); tx.objectStore(store).put(v,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
 async function blobDel(store,k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(store,"readwrite"); tx.objectStore(store).delete(k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
 async function loadBlobs(){ const a=await blobAll("img"); for(const k in a) Img.urls[k]=URL.createObjectURL(a[k]); const b=await blobAll("res"); for(const k in b) Media.urls[k]=URL.createObjectURL(b[k]); }
-function loadLocal(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); LIB.res=o.res||{}; LIB.runs=o.runs||{}; LIB.settings=o.settings||{}; for(const id in (o.lessons||{})) LIB.lessons[id]=o.lessons[id]; }catch(e){} }
-function saveLocal(){ try{ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; localStorage.setItem(LKEY,JSON.stringify({lessons:l,res:LIB.res,runs:LIB.runs,settings:LIB.settings})); }catch(e){ toast("This browser is full. Export a backup from Home."); } }
+function loadLocal(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); LIB.res=o.res||{}; LIB.runs=o.runs||{}; LIB.routines=o.routines||{}; LIB.settings=o.settings||{}; for(const id in (o.lessons||{})) LIB.lessons[id]=o.lessons[id]; }catch(e){} }
+function saveLocal(){ try{ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; localStorage.setItem(LKEY,JSON.stringify({lessons:l,routines:LIB.routines,res:LIB.res,runs:LIB.runs,settings:LIB.settings})); }catch(e){ toast("This browser is full. Export a backup from Home."); } }
 
 /* ---------- Store: cloud save (shared across your devices) or this browser ---------- */
 const Store = {
@@ -532,7 +540,7 @@ const Store = {
   async _init(){
     let db=null, assets=null;
     try{ if(window.claude && window.claude.use){ db=await window.claude.use("db"); assets=await window.claude.use("assets"); try{ this.dl=await window.claude.use("downloads"); }catch(e){} } }catch(e){}
-    if(db){ this.mode="cloud"; this.db=db; this.assets=assets; this.canUpload=!!assets; ["lessons","res","runs","settings","images"].forEach(c=>this._sub(c)); }
+    if(db){ this.mode="cloud"; this.db=db; this.assets=assets; this.canUpload=!!assets; ["lessons","routines","res","runs","settings","images"].forEach(c=>this._sub(c)); }
     else { this.mode="local"; this.canUpload=true; loadLocal(); try{ await loadBlobs(); }catch(e){} this.onChange("all"); }
   },
   _sub(col){
@@ -544,20 +552,21 @@ const Store = {
   },
   _ingest(col,m){
     if(col==="lessons"){ const L={oct22:BUILTIN}; for(const id in m){ try{ const o=JSON.parse(m[id].json); o.id=id; L[id]=o; }catch(e){} } LIB.lessons=L; }
+    else if(col==="routines"){ const R={}; for(const id in m){ try{ const o=JSON.parse(m[id].json); o.id=id; R[id]=o; }catch(e){} } LIB.routines=R; }
     else if(col==="res") LIB.res=m;
     else if(col==="runs") LIB.runs=m;
     else if(col==="settings") LIB.settings=m.main||{};
     else if(col==="images"){ const u={}, ids={}; for(const k in m){ if(m[k]&&m[k].assetId){ u[k]="/_blob/"+m[k].assetId; ids[k]=m[k].assetId; } } Img.urls=u; Img.ids=ids; }
   },
   async put(col,id,obj){
-    if(col==="lessons") LIB.lessons[id]=obj; else if(col==="res") LIB.res[id]=obj; else if(col==="runs") LIB.runs[id]=obj; else if(col==="settings") LIB.settings=obj;
+    if(col==="lessons") LIB.lessons[id]=obj; else if(col==="routines") LIB.routines[id]=obj; else if(col==="res") LIB.res[id]=obj; else if(col==="runs") LIB.runs[id]=obj; else if(col==="settings") LIB.settings=obj;
     if(this.mode==="local"){ saveLocal(); return; }
     await this.ready;
-    const doc = col==="lessons" ? {title:obj.title||"Lesson",json:JSON.stringify(obj),at:Date.now()} : clone(obj);
+    const doc = col==="lessons" ? {title:obj.title||"Lesson",json:JSON.stringify(obj),at:Date.now()} : (col==="routines" ? {title:obj.name||"Routine",json:JSON.stringify(obj),at:Date.now()} : clone(obj));
     return this._q(col+"/"+id,()=>this.db.doc(col+"/"+id).set(doc));
   },
   async del(col,id){
-    if(col==="lessons") delete LIB.lessons[id]; else if(col==="res") delete LIB.res[id]; else if(col==="runs") delete LIB.runs[id];
+    if(col==="lessons") delete LIB.lessons[id]; else if(col==="routines") delete LIB.routines[id]; else if(col==="res") delete LIB.res[id]; else if(col==="runs") delete LIB.runs[id];
     if(this.mode==="local"){ saveLocal(); return; }
     await this.ready;
     return this._q(col+"/"+id,()=>this.db.doc(col+"/"+id).delete());
@@ -1037,10 +1046,11 @@ function normalizeLesson(o){
 function lessonJSON(L){ return JSON.stringify({format:"lily-path-lesson-v1",title:L.title,date:L.date||"",short:L.short||"",teks:L.teks||[],grades:L.grades,words:L.words||null},null,2); }
 
 /* ---------- import and export ---------- */
-function backupObj(){ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; return {format:"lily-path-backup-v1",at:new Date().toISOString(),lessons:l,res:LIB.res,runs:LIB.runs,settings:LIB.settings}; }
+function backupObj(){ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; return {format:"lily-path-backup-v1",at:new Date().toISOString(),lessons:l,routines:LIB.routines,res:LIB.res,runs:LIB.runs,settings:LIB.settings}; }
 async function restoreBackup(o){
   let n=0;
   for(const id in (o.lessons||{})){ if(id==="oct22") continue; const L=normalizeLesson(o.lessons[id]); L.id=id; await Store.put("lessons",id,L); n++; }
+  for(const id in (o.routines||{})) await Store.put("routines",id,o.routines[id]);
   for(const id in (o.res||{})) await Store.put("res",id,o.res[id]);
   for(const id in (o.runs||{})) await Store.put("runs",id,o.runs[id]);
   if(o.settings && o.settings.theme) await Store.put("settings","main",Object.assign({},LIB.settings,{theme:o.settings.theme}));
@@ -1053,6 +1063,226 @@ async function restoreBackup(o){
    The AI writes short fill-in-the-blank slides ("lily":2). The app builds the big text,
    script, picture prompt and links from the blanks. Check first, save second. */
 const SLIDE_TYPES = { prep:"Prep", hook:"Hook", teach:"Teach", game:"Game", video:"Video", groups:"Groups", exit:"Wrap-up", routine:"Routine" };
+const SAMPLE_ROUTINES = {
+ "lily": 2,
+ "kind": "routines",
+ "routines": [
+  {
+   "id": "affirm",
+   "name": "Affirmations song",
+   "slides": [
+    {
+     "t": "video",
+     "title": "Affirmations Song",
+     "url": "https://youtu.be/4aO2PuLIcm8",
+     "start": 5,
+     "label": "Affirmations song",
+     "big": [
+      "Sing it loud. Sing it proud.",
+      "Say it like you mean it."
+     ],
+     "say": [
+      "Stand tall. Here comes our affirmations song!"
+     ],
+     "pic": "Baby animals standing tall in a row with hands over their hearts, glowing stars rising above them.",
+     "min": 2
+    }
+   ]
+  },
+  {
+   "id": "attendance",
+   "name": "Attendance game",
+   "slides": [
+    {
+     "t": "game",
+     "title": "The Attendance Game",
+     "goal": "Hear your name? Jump!",
+     "rules": [
+      "Jump = here today + 1 jumping point",
+      "No jump = here today, no point"
+     ],
+     "cue": "Jump when you hear your name",
+     "say": [
+      "When you hear or see your name, jump!",
+      "If you forget to jump, you still get here-today. Just no jumping point."
+     ],
+     "do": [
+      "Call roll at a quick pace",
+      "Give the jumping point to each student who jumps"
+     ],
+     "pic": "Baby animals leaping high above a rainbow carpet while the teacher holds a clipboard.",
+     "min": 3
+    }
+   ]
+  },
+  {
+   "id": "crosscrawl",
+   "name": "Cross-crawl march",
+   "weeks": [
+    {
+     "w": 1,
+     "t": "teach",
+     "title": "Cross-crawl: 10 slow reps",
+     "big": [
+      "10 slow reps"
+     ],
+     "say": [
+      "Ten slow reps. Elbow to the opposite knee."
+     ],
+     "do": [
+      "Count the reps out loud with the class."
+     ],
+     "pic": "Baby animals marching slowly, elbow to opposite knee.",
+     "min": 2
+    },
+    {
+     "w": 2,
+     "t": "teach",
+     "title": "Cross-crawl: 20 reps",
+     "big": [
+      "20 reps"
+     ],
+     "say": [
+      "Twenty reps. Keep it smooth."
+     ],
+     "do": [
+      "Count to 20 together."
+     ],
+     "pic": "Baby animals marching, elbow to opposite knee, smiling.",
+     "min": 2
+    },
+    {
+     "w": 3,
+     "t": "teach",
+     "title": "Cross-crawl: Count by 1s",
+     "big": [
+      "Count by 1s"
+     ],
+     "say": [
+      "Count by ones out loud as you march."
+     ],
+     "do": [
+      "Lead the counting for the first few reps."
+     ],
+     "pic": "Baby animals marching while counting out loud, number clouds floating above.",
+     "min": 2
+    },
+    {
+     "w": 4,
+     "t": "teach",
+     "title": "Cross-crawl: Count by 2s",
+     "big": [
+      "Count by 2s"
+     ],
+     "say": [
+      "Count by twos: 2, 4, 6, 8."
+     ],
+     "do": [
+      "Say the count with them, then let them lead."
+     ],
+     "pic": "Baby animals marching and counting by twos, big smiles.",
+     "min": 2
+    },
+    {
+     "w": 5,
+     "t": "teach",
+     "title": "Cross-crawl: Faster, eyes on a spot",
+     "big": [
+      "Faster, eyes on a spot"
+     ],
+     "say": [
+      "March faster. Keep your eyes on one spot."
+     ],
+     "do": [
+      "Point to a spot on the wall for everyone to look at."
+     ],
+     "pic": "Baby animals marching faster, all eyes on a glowing spot on the wall.",
+     "min": 2
+    },
+    {
+     "w": 6,
+     "t": "teach",
+     "title": "Cross-crawl: Skip-count by 5s and 10s",
+     "big": [
+      "Skip-count by 5s and 10s"
+     ],
+     "say": [
+      "Count by fives, then by tens, as you march."
+     ],
+     "do": [
+      "Write 5, 10, 15 on the board if kids need help."
+     ],
+     "pic": "Baby animals marching while counting by fives and tens.",
+     "min": 2
+    },
+    {
+     "w": 7,
+     "t": "teach",
+     "title": "Cross-crawl: Backwards march",
+     "big": [
+      "Backwards march"
+     ],
+     "say": [
+      "March backwards. Elbow to the opposite knee."
+     ],
+     "do": [
+      "Check that the space behind them is clear first."
+     ],
+     "pic": "Baby animals marching backwards in a line with clear space behind them.",
+     "min": 2
+    },
+    {
+     "w": 8,
+     "t": "teach",
+     "title": "Cross-crawl: One fact per rep",
+     "big": [
+      "One fact per rep"
+     ],
+     "say": [
+      "Say one fact on every rep."
+     ],
+     "do": [
+      "Give a topic first, like animals or colors."
+     ],
+     "pic": "Baby animals marching while each says a fact, speech bubbles with pictures only.",
+     "min": 2
+    },
+    {
+     "w": 9,
+     "t": "teach",
+     "title": "Cross-crawl: Eyes closed, 10 reps",
+     "big": [
+      "Eyes closed, 10 reps"
+     ],
+     "say": [
+      "Close your eyes. Ten reps, nice and slow."
+     ],
+     "do": [
+      "Clear space and a spotter line first. Stop right away if anyone wobbles."
+     ],
+     "pic": "Baby animals marching with eyes closed in a line with a spotter line on the floor.",
+     "min": 2
+    },
+    {
+     "w": 10,
+     "t": "teach",
+     "title": "Cross-crawl: March to a clap rhythm + facts",
+     "big": [
+      "March to a clap rhythm + facts"
+     ],
+     "say": [
+      "March to my clap rhythm and say your facts."
+     ],
+     "do": [
+      "Clap a steady beat, then change it."
+     ],
+     "pic": "Baby animals marching to a clap rhythm, music notes in the air.",
+     "min": 2
+    }
+   ]
+  }
+ ]
+};
 let PEND = null;   // the file that was checked and is waiting for Save
 
 const vStr = (v,d)=> typeof v==="string" ? v.trim() : (v==null ? (d||"") : String(v));
@@ -1113,7 +1343,7 @@ function expandSlide(s,sp,ctx){
   let t=vStr(s.t).toLowerCase();
   if(!t){ W(sp,'No "t" (type). Treated as "teach".'); t="teach"; }
   else if(!SLIDE_TYPES[t]){ W(sp,'Unknown type "'+t+'". Treated as "teach".'); t="teach"; }
-  if(t==="routine"){ E(sp,"Routine slides are not supported yet. Write the slides out in full."); return null; }
+  if(t==="routine"){ E(sp,"A routine cannot hold another routine."); return null; }
   let id=key+si; while(ctx.usedId[id]) id+="x"; ctx.usedId[id]=1;
   const title=vStr(s.title); if(!title) E(sp+".title","This slide needs a title.");
   const T=title||("Slide "+(si+1));
@@ -1181,20 +1411,77 @@ function buildLessonV2(o,R){
     const label=vStr(g.name||g.label,key)||key;
     const sl=Array.isArray(g.slides)?g.slides:[];
     if(!sl.length){ E(gp+".slides",'"'+label+'" has no slides.'); return; }
-    const slides=[];
-    sl.slice(0,60).forEach((s,si)=>{ const x=expandSlide(s,gp+".slides["+si+"]",{key,si,style,E,W,usedId}); if(x) slides.push(x); });
+    const slides=[]; let n=0;
+    sl.slice(0,60).forEach((s,si)=>{
+      const sp=gp+".slides["+si+"]";
+      if(s && typeof s==="object" && vStr(s.t).toLowerCase()==="routine"){
+        const rid=vStr(s.routine||s.id).replace(/[^A-Za-z0-9_-]/g,"");
+        if(!rid){ E(sp+".routine",'A routine slide needs "routine" (the routine id).'); return; }
+        const rt=(R.routineMap||{})[rid];
+        if(!rt){ E(sp+".routine",'Routine "'+rid+'" is not in your library. Add the routines file first, or put it in this file under "routines".'); return; }
+        const week=parseInt(s.week,10)||parseInt(o.week,10)||0, has=(rt.weeks||[]).length;
+        const pw=pickWeeks(rt,week);
+        if(has && !week) W(sp+".week",'"'+rt.name+'" has weekly steps. Add "week": a number from 1 to 10.');
+        else if(has && pw.used && pw.used!==week) W(sp+".week","Week "+week+' is not in "'+rt.name+'". Using week '+pw.used+".");
+        else if(has && week && !pw.used) W(sp+".week",'"'+rt.name+'" has no step for week '+week+" yet.");
+        R.used.push(rt.name+(pw.used?" (week "+pw.used+")":""));
+        (rt.slides||[]).concat(pw.items).forEach((b,j)=>{
+          const x=expandSlide(b,sp+" > "+rt.id+"["+j+"]",{key,si:n,style,E,W,usedId});
+          if(x){ n++; x.routine=rt.id; x.kick=rt.name+" \u00b7 "+x.kick+(pw.used?" \u00b7 Week "+pw.used:""); slides.push(x); }
+        });
+        return;
+      }
+      const x=expandSlide(s,sp,{key,si:n,style,E,W,usedId}); if(x){ n++; slides.push(x); }
+    });
     if(slides.length && !slides.some(x=>!x.teacher)) E(gp+".slides","Every slide is prep. Kids need at least one slide to see.");
     if(slides.length && !slides[0].teacher) W(gp+".slides[0]","The first slide is not a prep slide. A prep slide first helps a substitute.");
     if(!vStr(g.cast)) W(gp+".cast","No cast. Add 1 or 2 sentences about the characters in the pictures, or leave it empty on purpose.");
     L.grades.push({key,label,cast:vStr(g.cast),setting:vStr(g.setting),slides});
   });
   if(JSON.stringify(L).length>240000) E("file","This lesson is too big to save. Ask the AI for shorter scripts.");
-  R.kind="lesson"; R.lesson=L; R.summary=lessonSummary(L);
+  R.kind="lesson"; R.lesson=L; R.summary=lessonSummary(L); R.summary.routines=R.used.slice();
 }
 function lessonSummary(L){
   const teks=[]; const add=a=>(a||[]).forEach(x=>{ if(!teks.includes(x)) teks.push(x); });
   add(L.teks); L.grades.forEach(g=>g.slides.forEach(s=>add(s.teks)));
   return { title:L.title, teks, grades:L.grades.map(g=>({ label:g.label, total:g.slides.length, prep:g.slides.filter(s=>s.teacher).length, min:g.slides.reduce((a,s)=>a+(s.min||0),0) })) };
+}
+
+/* ---------- routines: things you do every class ---------- */
+function pickWeeks(rt,week){
+  const ws=rt.weeks||[]; if(!ws.length||!week) return {items:[],used:0};
+  const exact=ws.filter(x=>+x.w===week); if(exact.length) return {items:exact,used:week};
+  const lower=ws.map(x=>+x.w).filter(w=>w<week); if(!lower.length) return {items:[],used:0};
+  const m=Math.max.apply(null,lower); return {items:ws.filter(x=>+x.w===m),used:m};
+}
+function normalizeRoutines(list,R,bp){
+  const out=[], seen={};
+  if(!Array.isArray(list)||!list.length){ R.errors.push({path:bp,msg:'Add at least one routine under "routines".'}); return out; }
+  list.slice(0,40).forEach((r,i)=>{
+    const p=bp+"["+i+"]";
+    if(!r||typeof r!=="object"||Array.isArray(r)){ R.errors.push({path:p,msg:"This routine is not filled in right."}); return; }
+    const id=vStr(r.id).replace(/[^A-Za-z0-9_-]/g,"");
+    if(!id) R.errors.push({path:p+".id",msg:'A routine needs an "id" (letters and numbers, like warmup).'});
+    else if(seen[id]) R.errors.push({path:p+".id",msg:'Two routines use the id "'+id+'".'});
+    seen[id]=1;
+    const name=vStr(r.name); if(!name) R.errors.push({path:p+".name",msg:'A routine needs a "name".'});
+    const slides=Array.isArray(r.slides)?r.slides:[], weeks=Array.isArray(r.weeks)?r.weeks:[];
+    if(!slides.length&&!weeks.length) R.errors.push({path:p+".slides",msg:'A routine needs "slides", "weeks", or both.'});
+    const E=(pp,m)=>R.errors.push({path:pp,msg:m}), W=(pp,m)=>R.warnings.push({path:pp,msg:m}), usedId={};
+    slides.forEach((b,j)=>{
+      if(b&&typeof b==="object"&&vStr(b.t).toLowerCase()==="routine"){ E(p+".slides["+j+"]","A routine cannot hold another routine."); return; }
+      expandSlide(b,p+".slides["+j+"]",{key:"r",si:j,style:"x",E,W,usedId});
+    });
+    const wk=[];
+    weeks.forEach((b,j)=>{
+      const w=parseInt(b&&b.w,10);
+      if(!(w>=1&&w<=52)){ E(p+".weeks["+j+"].w",'Each weekly step needs "w", a week number from 1 to 52.'); return; }
+      expandSlide(b,p+".weeks["+j+"]",{key:"r",si:j,style:"x",E,W,usedId}); wk.push(Object.assign({},b,{w}));
+    });
+    wk.sort((a,b)=>a.w-b.w);
+    out.push({id,name,slides:slides.slice(),weeks:wk});
+  });
+  return out;
 }
 
 /* ---------- check a pasted file: nothing is saved here ---------- */
@@ -1216,7 +1503,15 @@ function parseImport(text){
   }
   if(o.lily!==2){ R.errors.push({path:"lily",msg:'The file must start with "lily": 2.'}); return R; }
   const kind=vStr(o.kind,"lesson")||"lesson";
+  if(kind==="routines"){
+    R.kind="routines"; R.routines=normalizeRoutines(o.routines,R,"routines");
+    R.summary={routines:R.routines.map(r=>({id:r.id,name:r.name,slides:r.slides.length,weeks:r.weeks.length}))};
+    R.ok=!R.errors.length; return R;
+  }
   if(kind!=="lesson"){ R.errors.push({path:"kind",msg:'"'+kind+'" files are not supported yet. Ask the chat for one lesson at a time.'}); return R; }
+  const map=Object.assign({},LIB.routines); R.used=[]; R.inline=[];
+  if(Array.isArray(o.routines)&&o.routines.length){ R.inline=normalizeRoutines(o.routines,R,"routines"); R.inline.forEach(r=>{ if(r.id) map[r.id]=r; }); }
+  R.routineMap=map;
   buildLessonV2(o,R);
   R.ok=!R.errors.length; return R;
 }
@@ -1230,7 +1525,12 @@ function fixRequest(P){
 async function saveImport(){
   const P=PEND; if(!P||!P.ok) return;
   if(P.kind==="backup"){ HMSG={text:await restoreBackup(P.backup)}; }
+  else if(P.kind==="routines"){
+    for(const r of P.routines) await Store.put("routines",r.id,r);
+    HMSG={text:"Routines saved: "+P.routines.map(r=>r.name).join(", ")};
+  }
   else{
+    for(const r of (P.inline||[])) await Store.put("routines",r.id,r);
     const L=P.lesson; L.id=uid("L"); await Store.put("lessons",L.id,L);
     S.lessonId=L.id; S.grade=null; S.runId=null; S.tab="slides"; save(); HMSG={text:"Lesson added: "+L.title};
   }
@@ -1245,9 +1545,13 @@ function previewHTML(P){
     const g=P.summary.grades;
     h+='<h3>'+esc(P.summary.title||"Untitled")+'</h3><ul>'
       +g.map(x=>'<li><b>'+esc(x.label)+'</b>: '+x.total+' slide'+(x.total===1?"":"s")+(x.prep?' ('+x.prep+' prep)':'')+(x.min?', about '+x.min+' min':'')+'</li>').join("")
+      +((P.summary.routines&&P.summary.routines.length)?'<li><b>Routines used:</b> '+P.summary.routines.map(esc).join(", ")+'</li>':'')
+      +((P.inline&&P.inline.length)?'<li><b>Also saves routines:</b> '+P.inline.map(r=>esc(r.name||r.id)).join(", ")+'</li>':'')
       +(P.summary.teks.length?'<li><b>TEKS:</b> '+P.summary.teks.map(esc).join(", ")+'</li>':'<li><b>TEKS:</b> none listed</li>')+'</ul>';
   } else if(P.kind==="backup"){
     h+='<h3>Backup</h3><ul><li>'+P.summary.lessons+' lesson'+(P.summary.lessons===1?"":"s")+'</li><li>'+P.summary.runs+' class score'+(P.summary.runs===1?"":"s")+'</li></ul>';
+  } else if(P.kind==="routines"){
+    h+='<h3>Routines</h3><ul>'+P.summary.routines.map(x=>'<li><b>'+esc(x.name||x.id||"Untitled")+'</b>: '+x.slides+' slide'+(x.slides===1?"":"s")+(x.weeks?', weekly steps for '+x.weeks+' week'+(x.weeks===1?"":"s"):"")+(LIB.routines[x.id]?' <span class="mini">(replaces the one you have)</span>':"")+'</li>').join("")+'</ul>';
   }
   if(P.fixes.length) h+='<p class="mini">Fixed automatically: '+esc(P.fixes.join(", "))+'.</p>';
   if(P.errors.length) h+='<h3 class="bad">Must fix ('+P.errors.length+')</h3><ul>'+P.errors.map(x=>'<li class="bad"><b>'+esc(x.path)+'</b> '+esc(x.msg)+'</li>').join("")+'</ul>';
@@ -1283,6 +1587,7 @@ function renderHome(){
   const stat = cloud ? '<span class="status ok">Cloud save is on</span>' : '<span class="status">Saved in this browser only</span>';
   const noUp = cloud && !Store.canUpload ? ' <span class="status">View and score only</span>' : '';
 
+  const routs=Object.values(LIB.routines).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   const items = lessons.map(x=>{
     const armed = ARM["l:"+x.id];
     const here = x.id===S.lessonId;
@@ -1319,6 +1624,10 @@ function renderHome(){
     +'<section class="card"><h2>Add a lesson</h2><p>Paste the file the AI gave you, then tap <b>Check</b>. You see a preview first. Nothing saves until you tap Save.</p>'
     +'<form class="frm" data-form="import"><textarea id="impText" placeholder="Paste here" style="min-height:120px">'+esc(dv("impText"))+'</textarea>'
     +'<div class="row"><label class="btn small" style="cursor:pointer;flex:0 0 auto">Pick a file<input type="file" id="impFile" accept=".json,.txt,application/json,text/plain" hidden></label><button class="btn primary small" type="submit" style="flex:0 0 auto">Check</button></div></form>'+msg+previewHTML(PEND)+'</section>'
+
+    +'<section class="card"><h2>Your routines</h2><p>Things you do every class. A lesson points to one, like <b>routine: warmup, week 3</b>.</p>'
+    +(routs.length?'<ul class="list">'+routs.map(r=>'<li class="item" style="flex-wrap:wrap"><div style="flex:1 1 180px"><b>'+esc(r.name)+'</b><small>'+(r.slides||[]).length+' slide'+((r.slides||[]).length===1?"":"s")+((r.weeks||[]).length?', '+r.weeks.length+' weekly step'+(r.weeks.length===1?"":"s"):"")+' · id: '+esc(r.id)+'</small></div><div style="display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto"><button class="btn small" data-act="copyroutine" data-id="'+esc(r.id)+'">Copy file</button><button class="btn small" data-act="delroutine" data-id="'+esc(r.id)+'">'+(ARM["o:"+r.id]?'Tap again to delete':'Delete')+'</button></div></li>').join("")+'</ul>':'<p class="note" style="margin:0">None yet.</p>')
+    +'<div class="row" style="margin-top:10px"><button class="btn small" data-act="sampleroutines">Load sample routines</button></div></section>'
 
     +'<section class="card span"><h2>Make a new lesson with AI</h2><p>No tech skills needed. The AI interviews you, gives feedback, suggests resources and standards, then writes the script and the lesson file.</p>'
     +'<ol class="wizsteps"><li><div>Tap <b>Copy</b> on the box below.</div></li><li><div>Open any AI chat (Claude, ChatGPT or Gemini) and paste it in. Send it.</div></li><li><div>Answer its questions, one at a time. "I am not sure" is a fine answer.</div></li><li><div>At the end it gives you a <b>MASTER PROMPT</b> and a <b>LESSON FILE</b>. Save the master prompt somewhere. Copy the lesson file.</div></li><li><div>Come back here, paste it into <b>Add a lesson</b>, and tap the button.</div></li></ol>'
@@ -1516,6 +1825,9 @@ const ACT = {
     Store.del("runs",id).catch(fail); if(S.runId===id) S.runId=null; S.revRun="all"; save();
   },
   async saveimport(){ try{ await saveImport(); }catch(e){ HMSG={bad:1,text:(e&&e.message)||"Could not save that."}; } },
+  sampleroutines(){ const t=JSON.stringify(SAMPLE_ROUTINES,null,2); D.impText=t; HMSG=null; PEND=parseImport(t); },
+  copyroutine(b){ const r=LIB.routines[b.dataset.id]; if(r) copyText(JSON.stringify({lily:2,kind:"routines",routines:[r]},null,2)); return false; },
+  async delroutine(b){ const id=b.dataset.id; if(!armTwice("o:"+id)) return; try{ await Store.del("routines",id); }catch(e){ fail(); } },
   clearimport(){ PEND=null; HMSG=null; delete D.impText; },
   copysummary(){ const r=runsFor(S.lessonId).find(x=>x.id===S.revRun); if(r) copyText(summaryText(LS(),r)); return false; },
   /* words */
@@ -1621,4 +1933,5 @@ render();
 Store.init(()=>{ render(); });
 </script>
 
-</body></html>
+</body>
+</html>
