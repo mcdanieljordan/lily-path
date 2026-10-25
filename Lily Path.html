@@ -1,0 +1,1624 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lily Path</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Lilita+One&display=swap">
+<style>
+/* Layout: sticky tab header, step rail, one big kid-facing stage, teacher panel (script, prompts, image) underneath. Present mode hides everything but the stage. Single deliberate dark look for projector contrast. */
+:root{
+  color-scheme: dark;
+  --bg:#12103a;
+  --bg-2:#1b1853;
+  --card:#242070;
+  --line:#3b378f;
+  --ink:#fff8e7;
+  --muted:#bdb9ea;
+  --leader:#38e07b;
+  --group:#47c1ff;
+  --comm:#ff9a3c;
+  --pop:#ffd43b;
+  --danger:#ff6b81;
+  --display:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;
+  --body:'Andika','Trebuchet MS',system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 28px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--pop);outline-offset:2px}
+h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:2px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px));}
+.top-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.brand{font-family:var(--display);font-size:26px;letter-spacing:.02em;color:var(--pop);line-height:1}
+.brand small{font-family:var(--body);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:8px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab,.btn{border:2px solid var(--line);background:var(--bg-2);border-radius:10px;padding:7px 14px;font-weight:700;font-size:14px}
+.tab[aria-selected="true"]{background:var(--pop);border-color:var(--pop);color:#2a2200}
+.btn:hover,.tab:hover{border-color:var(--pop)}
+.btn.primary{background:var(--pop);border-color:var(--pop);color:#2a2200}
+.btn.small{padding:4px 10px;font-size:13px;border-radius:8px}
+.btn[aria-pressed="true"]{border-color:var(--leader);color:var(--leader)}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+
+/* rail */
+.rail{display:flex;gap:6px;overflow-x:auto;padding:14px 2px 6px;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:2px solid var(--line);background:var(--bg-2);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.chip[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.t{border-style:dashed}
+
+/* stage */
+.stage{position:relative;margin-top:10px;border-radius:22px;border:3px solid var(--line);padding:clamp(18px,3.2vw,40px);
+  background:radial-gradient(900px 420px at 100% 0,rgba(71,193,255,.16),transparent 60%),radial-gradient(700px 360px at 0 100%,rgba(255,154,60,.14),transparent 60%),var(--bg-2);
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(16px,3vw,36px);align-items:center;min-height:min(62vh,520px)}
+.stage.noimg{grid-template-columns:minmax(0,1fr)}
+.kick{font-family:var(--display);font-size:clamp(14px,1.6vw,18px);letter-spacing:.12em;text-transform:uppercase;color:var(--group)}
+.stage h2{font-family:var(--display);font-size:clamp(34px,6vw,72px);line-height:1.02;margin:6px 0 14px}
+.big{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.big li{font-size:clamp(20px,2.7vw,34px);line-height:1.25;font-weight:700;padding-left:.2em}
+.big li.rule{background:rgba(255,255,255,.07);border-left:6px solid var(--pop);border-radius:10px;padding:8px 14px}
+.g{color:var(--leader)}.b{color:var(--group)}.o{color:var(--comm)}.y{color:var(--pop)}
+.key{position:absolute;top:12px;left:16px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;z-index:2}
+.key span{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.35);border-radius:999px;padding:3px 10px}
+.key i{width:12px;height:12px;border-radius:50%;display:block}
+.stage.haskey{padding-top:clamp(46px,5vw,56px)}
+
+.imgslot{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:18px;overflow:hidden;border:3px dashed var(--line);display:grid;place-items:center;background:rgba(0,0,0,.18);color:var(--muted);text-align:center;padding:12px;font-size:14px}
+.imgslot.has{border:3px solid var(--line);padding:0;background:#000}
+.imgslot img{width:100%;height:100%;object-fit:cover;display:block}
+body.present .imgslot:not(.has){display:none}
+
+/* math + tools on stage */
+.mathbox{margin-top:16px;background:rgba(0,0,0,.28);border:3px solid var(--comm);border-radius:16px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.mathq{font-family:var(--display);font-size:clamp(34px,5vw,60px);line-height:1;min-width:5.2em;font-variant-numeric:tabular-nums}
+.mathq em{font-style:normal;color:var(--pop)}
+
+/* nav */
+.navrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.navrow .count{color:var(--muted);font-weight:700;font-size:14px}
+.btn.big-nav{padding:10px 22px;font-size:16px}
+.btn[disabled]{opacity:.4;cursor:default}
+
+/* teacher panel */
+.teacher{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.panel{background:var(--bg-2);border:2px solid var(--line);border-radius:16px;padding:14px 16px;min-width:0}
+.panel h3{font-family:var(--display);font-size:20px;letter-spacing:.03em;color:var(--pop);margin-bottom:8px}
+.panel ul{margin:0;padding-left:1.15em;display:grid;gap:6px}
+.panel.say li::marker{color:var(--leader)}
+.panel.do li::marker{color:var(--comm)}
+.panel.wide{grid-column:1/-1}
+.copybox{position:relative;margin:0;background:#0c0a28;border:2px solid var(--line);border-radius:12px;padding:12px 12px 12px;font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;user-select:all;max-height:240px;overflow:auto}
+.copyhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 6px;font-size:13px;font-weight:700;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{color:var(--muted);font-size:13px;margin:8px 0 0}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--muted)}
+
+/* words view */
+.wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin-top:16px}
+.pickcard,.storycard{background:var(--bg-2);border:3px solid var(--line);border-radius:20px;padding:18px;min-width:0}
+.patt{font-family:var(--body);font-weight:700;font-size:clamp(56px,11vw,120px);letter-spacing:.14em;line-height:1.1;text-align:center;padding:14px 0;margin:10px 0;border-radius:16px;background:rgba(0,0,0,.28);overflow-wrap:anywhere}
+.patt.empty{font-size:20px;letter-spacing:0;color:var(--muted);font-weight:400}
+.lv{display:flex;gap:6px;flex-wrap:wrap}
+.lv .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.story{font-size:clamp(18px,2.2vw,24px);line-height:1.8}
+.blank{display:inline-block;min-width:3.2em;text-align:center;border-bottom:3px dashed var(--muted);color:var(--muted);font-size:.8em;padding:0 6px;margin:0 2px;line-height:1.2}
+.fill{font-weight:700;padding:0 6px;border-radius:8px;margin:0 1px;background:rgba(255,255,255,.08)}
+.fill.L1{color:var(--leader)}.fill.L2{color:var(--group)}.fill.L3{color:var(--comm)}
+.bleep{color:var(--danger);font-weight:700}
+.bank{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px;margin-top:16px}
+.bank h3{font-family:var(--display);font-size:20px;margin-bottom:6px}
+.bank ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.bank button.w{width:100%;display:flex;justify-content:space-between;gap:8px;align-items:center;text-align:left;border:2px solid transparent;background:rgba(255,255,255,.05);border-radius:10px;padding:5px 10px;font-size:15px}
+.bank button.w:hover{border-color:var(--pop)}
+.bank button.w .p{font-family:var(--mono);color:var(--muted);letter-spacing:.1em}
+.bank button.w.done{opacity:.55}
+.bank button.w.done b::after{content:" \2713";color:var(--leader)}
+.star{color:var(--pop)}
+.lv1 h3{color:var(--leader)}.lv2 h3{color:var(--group)}.lv3 h3{color:var(--comm)}
+
+/* present mode */
+.pbar{display:none}
+body.present .chrome{display:none}
+body.present{padding-block:12px}
+body.present .stage{min-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));margin-top:0}
+body.present .pbar{display:flex;position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));gap:6px;z-index:20;opacity:.35}
+body.present .pbar:hover,body.present .pbar:focus-within{opacity:1}
+body.present .top{display:none}
+body.present::before{display:none}
+
+@media (max-width:760px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .brand small{display:none}
+}
+/* forms + lists */
+input[type=text],input[type=url],select,textarea{font:inherit;color:var(--ink);background:#0c0a28;border:2px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;max-width:100%;width:100%}
+input[type=file]{max-width:100%;font-size:13px;color:var(--muted)}
+textarea{resize:vertical;min-height:84px}
+select{cursor:pointer}
+label.f{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--muted);min-width:0}
+.frm{display:grid;gap:10px;margin-top:10px}
+.frm .row>*{flex:1 1 160px;min-width:0}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;min-width:0}
+.item>div{min-width:0;overflow-wrap:anywhere}
+.item small{color:var(--muted);display:block}
+.pp{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+.cat{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:1px 7px;background:var(--line);color:var(--ink)}
+details.sc{margin-top:10px}
+details.sc summary{cursor:pointer;font-weight:700;color:var(--group)}
+details.sc ol{margin:8px 0 0;padding-left:1.3em;display:grid;gap:6px}
+
+/* stage side column: image, media, links */
+.side{display:grid;gap:12px;min-width:0;align-content:center}
+.media{display:grid;gap:6px;min-width:0}
+.media video,.media img.gif{width:100%;max-height:340px;border-radius:14px;border:3px solid var(--line);background:#000;display:block;object-fit:contain}
+.media audio{width:100%}
+.ytcard{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;text-decoration:none;color:var(--ink);background:rgba(0,0,0,.3);border:3px solid var(--danger);border-radius:16px;padding:12px 16px}
+.ytcard:hover,.ytcard:focus-visible{border-color:var(--pop)}
+.ytplay{width:56px;height:40px;background:var(--danger);border-radius:11px;position:relative}
+.ytplay::after{content:"";position:absolute;left:22px;top:11px;border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent}
+.ytcard b{display:block;font-family:var(--display);font-size:22px;font-weight:400;line-height:1.1}
+.ytcard small{color:var(--muted);font-size:13px}
+.linkchip{display:inline-flex;gap:6px;align-items:center;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.08);border:2px solid var(--line);border-radius:999px;padding:5px 14px;font-weight:700;font-size:15px}
+.linkchip:hover{border-color:var(--pop)}
+.linkrow{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ratings */
+.stars{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.stars button{border:2px solid var(--line);background:var(--bg);border-radius:10px;min-width:42px;height:42px;font-size:22px;line-height:1;color:var(--muted)}
+.stars button.on{color:var(--pop);border-color:var(--pop)}
+.stars button.zero{font-size:14px;font-weight:700}
+.stars button.zero.on{color:var(--danger);border-color:var(--danger)}
+
+/* bars */
+.runbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;font-size:14px;font-weight:700;color:var(--muted)}
+.runbar select{width:auto;min-width:150px;padding:5px 8px}
+.runbar form{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.runbar input{width:190px}
+.gradebar{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.gradebar .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* home + review */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;margin-top:16px}
+.card{background:var(--bg-2);border:3px solid var(--line);border-radius:20px;padding:18px;min-width:0}
+.card.span{grid-column:1/-1}
+.card h2{font-family:var(--display);font-size:26px;color:var(--pop);margin-bottom:6px;line-height:1.1}
+.card h3{font-family:var(--display);font-size:19px;color:var(--group);margin:14px 0 4px}
+.card p{margin:6px 0}
+.card ol.steps{margin:8px 0;padding-left:1.4em;display:grid;gap:6px}
+.hero{padding:clamp(16px,3vw,28px) 0 0}
+.hero h1{font-family:var(--display);font-size:clamp(40px,8vw,84px);line-height:1;color:var(--pop)}
+.hero p{max-width:60ch;color:var(--muted);margin:8px 0 0}
+.scorebig{font-family:var(--display);font-size:clamp(44px,8vw,84px);line-height:1;color:var(--leader)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.scroll{overflow-x:auto;max-width:100%}
+.status{display:inline-block;border:2px solid var(--line);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:700;color:var(--muted)}
+.status.ok{border-color:var(--leader);color:var(--leader)}
+[hidden]{display:none!important}
+.mini{font-size:13px;color:var(--muted)}
+.wizsteps{counter-reset:s;list-style:none;padding:0;margin:8px 0;display:grid;gap:8px}
+.wizsteps li{counter-increment:s;display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start}
+.wizsteps li::before{content:counter(s);width:30px;height:30px;border-radius:50%;background:var(--pop);color:#2a2200;font-weight:700;display:grid;place-items:center}
+.msg{margin-top:8px;padding:8px 12px;border-radius:10px;border:2px solid var(--line);font-size:14px}
+.msg.bad{border-color:var(--danger);color:var(--danger)}
+.msg.good{border-color:var(--leader);color:var(--leader)}
+.starsline{letter-spacing:.1em;color:var(--pop);white-space:nowrap}
+.pv{margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:12px;background:rgba(0,0,0,.22);min-width:0}
+.pv h3{font-family:var(--display);font-size:20px;color:var(--pop);margin:0 0 4px;font-weight:400}
+.pv h3.bad{color:var(--danger);margin-top:10px}
+.pv ul{margin:6px 0 0;padding-left:1.2em;display:grid;gap:4px;overflow-wrap:anywhere}
+.pv .bad{color:var(--danger)}.pv .warn{color:var(--pop);cursor:pointer;font-weight:700}.pv .good{color:var(--leader);font-weight:700;margin:6px 0 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+<header class="top chrome">
+  <div class="top-in">
+    <div class="brand">Lily Path <small id="brandSub">PE lesson deck</small></div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-home" data-act="tab" data-tab="home" aria-selected="true">Home</button>
+      <button class="tab" role="tab" id="tab-slides" data-act="tab" data-tab="slides" aria-selected="false">Slides</button>
+      <button class="tab" role="tab" id="tab-words" data-act="tab" data-tab="words" aria-selected="false">Words &amp; Story</button>
+      <button class="tab" role="tab" id="tab-review" data-act="tab" data-tab="review" aria-selected="false">Review</button>
+    </nav>
+    <div class="tools">
+      <button class="btn" id="btnScript" data-act="script" aria-pressed="true">Script</button>
+      <button class="btn primary" id="btnPresent" data-act="present">Present</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-home" aria-label="Home"></section>
+
+  <section id="view-slides" hidden aria-label="Slides">
+    <div class="gradebar chrome" id="gradebar"></div>
+    <div class="runbar chrome" id="runbar"></div>
+    <div class="rail chrome" id="rail"></div>
+    <article class="stage" id="stage" aria-live="polite"></article>
+    <div class="navrow chrome">
+      <button class="btn big-nav" id="prev" data-act="prev">Back</button>
+      <span class="count" id="count"></span>
+      <button class="btn big-nav primary" id="next" data-act="next">Next</button>
+    </div>
+    <div class="teacher chrome" id="teacher"></div>
+  </section>
+
+  <section id="view-words" hidden aria-label="Words and story">
+    <p class="note" id="noWords" hidden style="margin-top:16px">This lesson has no word game. Open the built-in lesson, or ask the AI wizard to include one.</p>
+    <div class="wgrid" id="wgrid">
+      <div class="pickcard">
+        <h2 style="font-family:var(--display);font-size:28px;color:var(--pop)">Word Picker</h2>
+        <p class="note" style="margin-top:2px">Show the blank pattern. The group says the missing letters. Tap Earned to add the word to the story.</p>
+        <div class="row" style="margin-top:12px">
+          <div class="lv" id="lvBtns"></div>
+          <button class="btn small" id="storyOnly" data-act="storyonly" aria-pressed="true">Story words only</button>
+        </div>
+        <div class="patt empty" id="patt">Tap Draw word</div>
+        <div class="row">
+          <button class="btn primary" data-act="draw">Draw word</button>
+          <button class="btn" data-act="reveal" id="revealBtn" disabled>Show answer</button>
+          <button class="btn" data-act="earned" id="earnedBtn" disabled>Earned</button>
+        </div>
+        <p class="note" id="pickNote"></p>
+      </div>
+      <div class="storycard">
+        <div class="row" style="justify-content:space-between">
+          <h2 style="font-family:var(--display);font-size:28px;color:var(--pop)" id="storyTitle"></h2>
+          <span class="tag" id="storyCount"></span>
+        </div>
+        <p class="story" id="story"></p>
+        <div class="row">
+          <button class="btn" id="readMode" data-act="readmode" aria-pressed="false">Read-aloud view</button>
+          <button class="btn small" id="resetBtn" data-act="reset">Reset story</button>
+        </div>
+        <p class="note">Blank words read as BLEEP in read-aloud view, so a half-filled story still gets a laugh.</p>
+      </div>
+    </div>
+    <div class="bank" id="bank"></div>
+  </section>
+
+  <section id="view-review" hidden aria-label="Review"></section>
+</main>
+
+<div class="pbar" id="pbar">
+  <button class="btn small" data-act="prev" aria-label="Back">Back</button>
+  <button class="btn small" data-act="next" aria-label="Next">Next</button>
+  <button class="btn small" data-act="present" aria-label="Exit present mode">Exit</button>
+</div>
+<script>
+"use strict";
+/* ---------- DATA: slides ---------- */
+const CAST = "Cast: Coach Rex is a friendly purple T. rex teacher with a silver whistle and a striped shirt. Students are baby animals. A LEADER wears a bright GREEN crown, GROUP members wear BLUE bandanas, and the COMMUNICATOR wears an ORANGE bandana. Vivid, saturated colors. Fun cartoon look, not realistic, not chibi, not clip art. No text, letters or numbers anywhere in the image.";
+const CASTG = "Coach Rex, a friendly purple T. rex with a whistle, can appear in the background. Vivid, saturated colors. Fun cartoon look, not realistic, not chibi, not clip art. No text, letters or numbers anywhere in the image.";
+
+const KINDER = [
+ { id:"k0", teacher:true, kick:"Teacher prep", title:"Before You Start",
+   big:["One beanbag per student, kept in the bin until groups earn them","Group lists with names, most points first","Open floor for circles, plus wall space for the Audience Game","Words & Story open on a second screen or tab"],
+   say:[], doit:["Check that the affirmations song and any video are queued","Present mode hides the teacher panel, so project that and keep this screen to yourself"] },
+
+ { id:"k1", kick:"Step 1 · Warm-up", title:"Backspin Time",
+   big:["Get the wiggles out with the move you already know.","Find your own space.","Arms wide. Soft hands. Slow and smooth."],
+   say:["Backspin time! Show me the move you learned.","Find your own space. Stretch your arms out wide. No touching anyone."],
+   doit:["Let them practice for a few minutes","Give one specific shout-out per area of the room"],
+   scene:"A baby raccoon breakdancing in a mid-backspin on the floor with motion swirls, while other baby animals cheer in a loose circle.",
+   style:"bold comic-book pop art with halftone dots, thick outlines, hot pink and cyan",
+   video:"10-second loop: the raccoon spins on its back three times with speed lines while the crowd bounces." },
+
+ { id:"k2", kick:"Step 1 · Warm-up", title:"Affirmations Song",
+   big:["Sing it loud. Sing it proud.","Say it like you mean it."],
+   say:["Stand tall. Here comes our affirmations song!"],
+   doit:["Play your standard affirmations song","Tap the song card to open it on YouTube. It starts at 0:05"],
+   resources:[{id:"yt-aff",type:"link",yt:1,locked:1,url:"https://youtu.be/4aO2PuLIcm8?t=5",label:"Affirmations song"}],
+   scene:"Baby animals standing tall in a row with hands over their hearts, glowing stars rising above them, Coach Rex conducting with a big smile.",
+   style:"dreamy layered paper-cut art with sunrise purples and golds" },
+
+ { id:"k3", kick:"Step 2 · Attendance", title:"The Attendance Game",
+   big:["Hear your name? [y:JUMP!]","!Jump = here today + [y:1 jumping point]","!No jump = here today, no point"],
+   say:["When you hear or see your name, jump!","If you forget to jump, you still get here-today. Just no jumping point."],
+   doit:["Call roll at a quick pace","Give the jumping point to each student who jumps"],
+   scene:"Baby animals leaping high above a rainbow carpet while Coach Rex holds a clipboard and blows a whistle.",
+   style:"retro arcade-inspired cartoon with a neon grid background, yellow and magenta",
+   video:"10-second loop: kids pop up one at a time as a name card flashes, with a coin popping above each jumper." },
+
+ { id:"k4", kick:"Step 3 · Today's challenge", title:"Don't Drop It!", tool:"math",
+   big:["Today's challenge: [y:don't drop your beanbag.]","!Dropped it? You broke the game. Bring it back to life:","!1. Answer a quick math question","!2. Do [o:2 Bullfrog Bombs]"],
+   say:["Today we have a challenge. Do not let your beanbag touch the floor.","If it drops, the game is broken, not you. Answer a quick math question, then do two Bullfrog Bombs to bring it back to life.","A Bullfrog Bomb is a full squat jump. Get low like a frog, then explode up."],
+   doit:["Beanbags come later. Groups earn them","One quick equation, no word problems"],
+   scene:"A baby frog in a deep squat, about to leap, with a gray beanbag on the ground beside it that is starting to glow bright yellow like a tiny campfire coming back to life.",
+   style:"bright storybook watercolor with bold ink lines, lime and orange",
+   video:"10-second clip: a beanbag drops and turns gray, the frog does two huge squat jumps, the beanbag glows yellow again." },
+
+ { id:"k5", kick:"Step 4 · Big idea", title:"Two Ways to Win",
+   big:["Big challenges have [y:two] ways to win:","!One tiny step at a time","!A strong team you trust","Know your strengths. Know your team's strengths."],
+   say:["When a challenge feels huge, you can break it into small steps.","Or you can build a team you trust. A good team knows who is strong at what.","Today we practice both."],
+   doit:["Keep it short, they are about to practice it"],
+   scene:"A baby bear looking up at a huge mountain. On one side are tiny stepping stones up the slope. On the other side a team of baby animals link arms at the base.",
+   style:"flat vector poster with big geometric shapes, teal and sunset orange" },
+
+ { id:"k6", key:true, kick:"Step 5 · Groups", title:"Find Your Group",
+   big:["Find your group fast.","Stand in a circle, facing in.","Space out so your arms can swing."],
+   say:["Find your group. Walk, don't run.","Make a circle with your group so everyone can see everyone."],
+   doit:["Show group lists on the board or hand out cards","The leader is the student with the most points"],
+   scene:"Four baby animals (a fox, a bear, a bunny and a penguin) standing in a loose circle on the floor, spaced out, smiling at each other.",
+   style:"chunky claymation look with soft shadows, sky blue and grass green" },
+
+ { id:"k7", key:true, kick:"Step 6 · Leader", title:"Pick Your Leader",
+   big:["Most points? [g:You lead!]","!Tied? Vote. Everyone points to who they want.","Leaders: get ready to guide your team."],
+   say:["The student with the most points is the leader.","If two or three students tie, everyone in the group points to who they want to lead."],
+   doit:["Check the lists for ties","For a tie vote, count the pointing out loud so it feels fair"],
+   scene:"A baby lion wearing a glowing green crown, standing proudly in the middle of a circle while the others point at it.",
+   style:"comic-book hero splash page with green and gold rays" },
+
+ { id:"k8", key:true, kick:"Step 7 · Leader job", title:"Eyes Closed, Ears Open",
+   big:["Team: [b:close your eyes.]","Leader: give clear commands.","!Spin · Sit · Stand · Clap two times · Hop on one foot","Stay on your spot. No walking!"],
+   say:["Leaders, tell your team to close their eyes. Then give simple directions, like spin around or sit down.","This is not Simon Says. Just say the command.","Leaders, watch closely. Who listened best?"],
+   doit:["Safety: everyone stays on their spot, no moving across the floor with eyes closed","Leader picks the best listener when the commands are done"],
+   scene:"A circle of baby animals with eyes squeezed shut, spinning in place and sitting on the floor, while a baby lion with a green crown calls directions and watches closely.",
+   style:"neon night-sport poster with glowing outlines on a dark purple background",
+   video:"10-second loop: the team has eyes closed, the leader points up, the team stands, spins, then sits." },
+
+ { id:"k9", key:true, kick:"Step 8 · Communicator", title:"Best Listener Goes to Coach",
+   big:["[g:Leader] picks the [o:best listener].","That student is the [o:communicator].","Communicator walks to Coach."],
+   say:["Leaders, who followed directions best? That person is your communicator.","Communicators, come see me. I will show you a word puzzle."],
+   doit:["Only the communicator comes to you","Show the pattern from Words & Story"],
+   scene:"A baby penguin with an orange bandana waddling proudly toward Coach Rex across the room while its team waves from a circle behind it.",
+   style:"storybook gouache with warm lighting, orange and teal" },
+
+ { id:"k10", key:true, kick:"Step 9 · Spelling password", title:"Spelling Password", tool:"words",
+   big:["[o:Communicator]: tell the whole team the puzzle.","[g:Leader]: pick the most focused person.","Say the missing letters to Coach.","!Correct? Your team earns beanbags!"],
+   say:["Communicator, tell your whole team the word puzzle. Don't whisper it to just the leader.","Leader, who is the most focused right now? Choose that person to give me the answer.","Say the missing letters. Get it right and your whole team earns beanbags."],
+   doit:["Pick the level that fits the group in Words & Story","Tap Earned to add the word to the story"],
+   scene:"A baby owl with an orange bandana holding a big puzzle card with empty blank squares while teammates huddle close to help.",
+   style:"retro sticker-sheet look with thick white borders and bright pastels" },
+
+ { id:"k11", key:true, kick:"Step 10 · Beanbags", title:"Beanbags Earned!", tool:"math",
+   big:["Your team earned [y:beanbags]!","Rule still on: don't drop it.","!Dropped it? Math question + [o:2 Bullfrog Bombs]"],
+   say:["Everyone gets a beanbag. Remember: if it hits the floor, answer a math question and do two Bullfrog Bombs."],
+   doit:["Hand out beanbags to the whole group once the answer is right","Keep groups in their circles"],
+   scene:"Baby animals joyfully receiving glowing yellow beanbags from Coach Rex, with confetti in the air.",
+   style:"bold graffiti-sticker look with outlined shadows, yellow and purple" },
+
+ { id:"k12", kick:"Step 11 · Balance lab", title:"Balance Lab",
+   big:["Balance your beanbag on:","!Hand · Shoulder · Head · Knee · Back of the hand","Tiny moves keep it steady.","Try one foot. Try a yoga pose."],
+   say:["Find where your beanbag feels still. Tiny micro-adjustments keep it there.","Make your circle a little bigger. Try your hand, head, knee, shoulder, then one foot."],
+   doit:["Groups can start as soon as they have their beanbags","Praise small adjustments, not only success"],
+   scene:"Baby animals in a wide circle, each balancing a beanbag on a different body part. One stands on one leg like a flamingo with calm focus.",
+   style:"serene sunrise gradient illustration with soft shapes, flamingo pink and sky blue",
+   video:"10-second loop: a baby animal wobbles slightly, then settles into a still pose while the beanbag stays on its head." },
+
+ { id:"k13", key:true, kick:"Step 12 · Mimic You", title:"Mimic You",
+   big:["Face Coach. Be my [b:mirror].","!My right hand = your [y:left] hand","Copy my moves. Keep your beanbag up!"],
+   say:["Face me like a mirror. When I move my right hand, you move your left.","Watch closely. Copy the whole move, then freeze."],
+   doit:["Face the groups so they mirror you","Chain two or three moves, then add one more each round","Add a beanbag balance move for a challenge"],
+   scene:"Coach Rex stands on his left leg with his right arm raised. Facing him, a row of baby animals copy him as a mirror image: standing on their right legs with left arms raised, beanbags balanced on their shoulders.",
+   style:"crisp Saturday-morning cartoon with a magenta and cyan split background",
+   video:"10-second loop: Coach Rex raises his right hand, then all the kids raise their left hands at the same moment." },
+
+ { id:"k14", kick:"Step 13 · Story time", title:"Story Time", tool:"words",
+   big:["Our silly story is ready.","Let's hear what your words made!"],
+   say:["Every word you spelled is in this story. Listen for your word."],
+   doit:["Open Words & Story and switch on Read-aloud view","Unfilled blanks read as BLEEP"],
+   scene:"Baby animals piled on a bright story carpet around Coach Rex, who reads from a giant glowing storybook and laughs.",
+   style:"cozy bedtime-story cartoon with warm lamplight, deep teal and gold" },
+
+ { id:"k15", kick:"Step 14 · Team talk", title:"Team Talk",
+   big:["What does your team do well?","What does your team need help with?","What did your leader do that helped?"],
+   say:["Strong teams know what they are good at, and where they need help.","Turn to your group and say one strength."],
+   doit:["Pull two or three student answers","Tie it back: small steps, or a team you trust"],
+   scene:"A team of baby animals high-fiving in a circle with a baby lion in a green crown at the center, confetti falling.",
+   style:"sporty team-poster look with bold diagonal stripes, lime and navy" },
+
+ { id:"k16", kick:"Any time a video plays", title:"The Audience Game",
+   big:["Be a great [y:audience].","!Watching and listening? You stay in.","!Distracting? Go to the wall.","!Back to watching? Coach invites you back."],
+   say:["When we watch a video, we act like a theater audience. Eyes on the screen, quiet bodies.","If you are distracting, you go to the wall. When you show me you are ready, I will invite you back."],
+   doit:["Invite wall students back the moment they show attention","Keep the tone upbeat. It's a game rule, not a punishment"],
+   scene:"Baby animals in tiny theater seats holding popcorn, gazing at a big glowing screen. One mischievous monkey stands by the wall, waiting to be invited back.",
+   style:"classic movie-poster cartoon with spotlight beams, deep red and gold" }
+];
+
+const GRADE3 = [
+ { id:"g0", teacher:true, kick:"Teacher prep", title:"Before the PACER",
+   big:["Roster and a way to record lap counts","Cones or tape for the course","PACER audio and a speaker","Water and a clear space"],
+   say:[], doit:["Set the course up the way your FitnessGram/TEA instructions describe","Plan where students sit and wait once they are out"] },
+
+ { id:"g1", cast:"g", kick:"3rd grade · Fitness test", title:"The PACER",
+   big:["Run to the line before the beep.","The beeps get faster every level.","!Miss the line once? Turn around and keep going.","!Miss it twice? You're done. Great effort!"],
+   say:["This is the PACER, a running test from the FitnessGram. Cross the line with a foot before the beep.","The beeps speed up as we go, so it gets harder. Do your best and stay in your lane."],
+   doit:["Follow the FitnessGram/TEA instructions for administering the PACER","Demonstrate one lap before you start"],
+   scene:"Baby cheetahs and gazelles sprinting between two lines on a track, with a speaker sending out colorful sound waves.",
+   style:"dynamic sports-anime-inspired cartoon with speed streaks, orange and electric blue" },
+
+ { id:"g2", cast:"g", kick:"3rd grade · Fitness test", title:"Line Up and Go",
+   big:["Start behind the line.","Listen for the beep.","Pace yourself: smooth and steady.","Out? Sit, cheer, and remember your laps."],
+   say:["Line up behind the line and wait for the audio to start.","If you're out, sit down, cheer for your classmates, and remember your lap count."],
+   doit:["Have students report or record their lap counts as they finish","Water break once everyone is done"],
+   scene:"A row of baby animals crouched at a starting line, ready to sprint, with cones marking the lanes.",
+   style:"bold retro track-and-field poster with big color blocks, red and gold" },
+
+ { id:"g3", cast:"g", kick:"3rd grade · If time allows", title:"Heights and Weights",
+   big:["Quiet line, one at a time.","These numbers are private.","No comparing. Just collecting."],
+   say:["We measure so we can see how we grow. These numbers are private to you."],
+   doit:["Call students one at a time and record privately","Skip it if the PACER runs long"],
+   scene:"A friendly baby giraffe standing against a tall blank measuring chart while Coach Rex writes on a clipboard.",
+   style:"clean flat illustration with pastel mint and peach" }
+];
+</script>
+<script>
+"use strict";
+/* ---------- built-in words + story, and the built-in lesson ---------- */
+// l = level (1 Starter, 2 Builder, 3 Challenge), p = pattern with blanks, s = word appears in the story
+const BANK = [
+ {w:"CAN",p:"c_n",l:1},{w:"RUN",p:"r_n",l:1},{w:"BIG",p:"b_g",l:1,s:1},{w:"RED",p:"r_d",l:1},
+ {w:"YES",p:"y_s",l:1,s:1},{w:"SEE",p:"se_",l:1},{w:"JUMP",p:"j_mp",l:1},{w:"HELP",p:"h_lp",l:1},
+ {w:"WENT",p:"w_nt",l:1,s:1},{w:"WILL",p:"w_ll",l:1},{w:"LOOK",p:"lo_k",l:1,s:1},{w:"PLAY",p:"pl_y",l:1,s:1},
+ {w:"THAT",p:"th_t",l:2},{w:"THIS",p:"__is",l:2},{w:"WITH",p:"wi__",l:2},{w:"LIKE",p:"l_k_",l:2},
+ {w:"MAKE",p:"m_k_",l:2},{w:"COME",p:"c_m_",l:2,s:1},{w:"DOWN",p:"d__n",l:2,s:1},{w:"HAVE",p:"h_v_",l:2},
+ {w:"INTO",p:"i__o",l:2,s:1},{w:"GOOD",p:"g__d",l:2},{w:"FROM",p:"f__m",l:2},{w:"BLUE",p:"bl__",l:2},
+ {w:"SAID",p:"s__d",l:3},{w:"WHAT",p:"w__t",l:3},{w:"WANT",p:"wa__",l:3},{w:"THEY",p:"th_y",l:3},
+ {w:"THERE",p:"th_re",l:3},{w:"WHERE",p:"wh_re",l:3},{w:"FUNNY",p:"f_nn_",l:3,s:1},{w:"THREE",p:"thr__",l:3},
+ {w:"LITTLE",p:"li__le",l:3},{w:"YELLOW",p:"y_ll_w",l:3,s:1},{w:"PLEASE",p:"pl__se",l:3,s:1},{w:"FRIEND",p:"fr__nd",l:3,s:1}
+];
+const STORY_TITLE = "The Mud Monster Party";
+const STORY_TEXT = "A {{BIG}} dragon wanted a {{FRIEND}}. “{{PLEASE}} {{COME}} {{PLAY}}!” he roared. A frog hopped {{DOWN}} the hill. “{{YES}}!” said the frog. They {{WENT}} {{INTO}} the mud. “{{LOOK}}!” said the frog. “You are a {{YELLOW}} mud monster!” “That is so {{FUNNY}}!”";
+
+const BUILTIN = {
+  id:"oct22", builtin:true, title:"Small Steps or a Strong Team", date:"2026-10-22",
+  short:"Kinder practices following directions, leading a team, and not dropping a beanbag, with a break-the-game, bring-it-back rule for every mistake. 3rd grade takes the PACER.",
+  teks:[],
+  grades:[
+    { key:"k", label:"Kinder", cast:CAST, setting:"a bright school gym", slides:KINDER },
+    { key:"g3", label:"3rd Grade", cast:CASTG, setting:"a bright school gym", slides:GRADE3 }
+  ],
+  words:{ levels:["Starter","Builder","Challenge"], bank:BANK, storyTitle:STORY_TITLE, storyText:STORY_TEXT }
+};
+</script>
+<script>
+"use strict";
+/* ---------- state kept per browser (UI position only) ---------- */
+const KEY = "lily-path-v2", LKEY = "lily-path-local-v2";
+const S = { tab:"home", lessonId:"oct22", grade:null, idx:{}, script:true, present:false, level:0, storyOnly:true, read:false, cur:null, shown:false, wstate:{}, runId:null, revRun:"all" };
+try{ const o = JSON.parse(localStorage.getItem(KEY)||"null"); if(o){ for(const k of ["lessonId","grade","idx","script","level","storyOnly","wstate","runId"]) if(o[k]!==undefined) S[k]=o[k]; } }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({lessonId:S.lessonId,grade:S.grade,idx:S.idx,script:S.script,level:S.level,storyOnly:S.storyOnly,wstate:S.wstate,runId:S.runId})); }catch(e){} }
+
+/* ---------- data cache ---------- */
+const LIB = { lessons:{ oct22:BUILTIN }, res:{}, runs:{}, settings:{} };
+const Img = { urls:{}, ids:{} };
+const Media = { urls:{} };
+
+/* ---------- helpers ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = s=>esc(s).replace(/\[([gboy]):([^\]]+)\]/g,'<span class="$1">$2</span>');
+const uid = p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clone = o=>JSON.parse(JSON.stringify(o));
+function safeUrl(u){ u=String(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u.replace(/^\/+/,""); try{ const x=new URL(u); return (x.protocol==="http:"||x.protocol==="https:")?x.href:""; }catch(e){ return ""; } }
+function isYT(u){ try{ const h=new URL(safeUrl(u)).hostname.replace(/^www\./,""); return h==="youtu.be"||h==="youtube.com"||h==="m.youtube.com"; }catch(e){ return false; } }
+function toast(msg){
+  let t=$("#toast");
+  if(!t){ t=document.createElement("div"); t.id="toast"; t.setAttribute("role","status");
+    t.style.cssText="position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:8px 14px;max-width:calc(100% - 32px)";
+    document.body.appendChild(t); }
+  t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>{t.hidden=true},3200);
+}
+function copyText(text, pre){
+  const fallback=()=>{ try{ if(pre){ const r=document.createRange(); r.selectNodeContents(pre); const s=getSelection(); s.removeAllRanges(); s.addRange(r); } toast("Selected. Press Ctrl+C or Cmd+C to copy."); }catch(e){} };
+  try{ navigator.clipboard.writeText(text).then(()=>toast("Copied"),fallback); }catch(e){ fallback(); }
+}
+
+/* ---------- browser file storage (used when cloud save is not available) ---------- */
+function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open("lily-path",2); r.onupgradeneeded=()=>{ const d=r.result; for(const n of ["img","res"]) if(!d.objectStoreNames.contains(n)) d.createObjectStore(n); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function blobAll(store){ const db=await idbOpen(); return new Promise((res,rej)=>{ const out={}; const cur=db.transaction(store).objectStore(store).openCursor(); cur.onsuccess=()=>{ const c=cur.result; if(c){ out[c.key]=c.value; c.continue(); } else res(out); }; cur.onerror=()=>rej(cur.error); }); }
+async function blobPut(store,k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(store,"readwrite"); tx.objectStore(store).put(v,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function blobDel(store,k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(store,"readwrite"); tx.objectStore(store).delete(k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function loadBlobs(){ const a=await blobAll("img"); for(const k in a) Img.urls[k]=URL.createObjectURL(a[k]); const b=await blobAll("res"); for(const k in b) Media.urls[k]=URL.createObjectURL(b[k]); }
+function loadLocal(){ try{ const o=JSON.parse(localStorage.getItem(LKEY)||"{}"); LIB.res=o.res||{}; LIB.runs=o.runs||{}; LIB.settings=o.settings||{}; for(const id in (o.lessons||{})) LIB.lessons[id]=o.lessons[id]; }catch(e){} }
+function saveLocal(){ try{ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; localStorage.setItem(LKEY,JSON.stringify({lessons:l,res:LIB.res,runs:LIB.runs,settings:LIB.settings})); }catch(e){ toast("This browser is full. Export a backup from Home."); } }
+
+/* ---------- Store: cloud save (shared across your devices) or this browser ---------- */
+const Store = {
+  mode:"local", db:null, assets:null, dl:null, canUpload:false, last:{}, q:{}, onChange:()=>{}, ready:Promise.resolve(),
+  init(cb){ this.onChange=cb; this.ready=this._init(); return this.ready; },
+  async _init(){
+    let db=null, assets=null;
+    try{ if(window.claude && window.claude.use){ db=await window.claude.use("db"); assets=await window.claude.use("assets"); try{ this.dl=await window.claude.use("downloads"); }catch(e){} } }catch(e){}
+    if(db){ this.mode="cloud"; this.db=db; this.assets=assets; this.canUpload=!!assets; ["lessons","res","runs","settings","images"].forEach(c=>this._sub(c)); }
+    else { this.mode="local"; this.canUpload=true; loadLocal(); try{ await loadBlobs(); }catch(e){} this.onChange("all"); }
+  },
+  _sub(col){
+    this.db.collection(col).onSnapshot(snap=>{
+      const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); });
+      const s=JSON.stringify(m); if(this.last[col]===s) return; this.last[col]=s;
+      this._ingest(col,m); this.onChange(col);
+    },()=>{});
+  },
+  _ingest(col,m){
+    if(col==="lessons"){ const L={oct22:BUILTIN}; for(const id in m){ try{ const o=JSON.parse(m[id].json); o.id=id; L[id]=o; }catch(e){} } LIB.lessons=L; }
+    else if(col==="res") LIB.res=m;
+    else if(col==="runs") LIB.runs=m;
+    else if(col==="settings") LIB.settings=m.main||{};
+    else if(col==="images"){ const u={}, ids={}; for(const k in m){ if(m[k]&&m[k].assetId){ u[k]="/_blob/"+m[k].assetId; ids[k]=m[k].assetId; } } Img.urls=u; Img.ids=ids; }
+  },
+  async put(col,id,obj){
+    if(col==="lessons") LIB.lessons[id]=obj; else if(col==="res") LIB.res[id]=obj; else if(col==="runs") LIB.runs[id]=obj; else if(col==="settings") LIB.settings=obj;
+    if(this.mode==="local"){ saveLocal(); return; }
+    await this.ready;
+    const doc = col==="lessons" ? {title:obj.title||"Lesson",json:JSON.stringify(obj),at:Date.now()} : clone(obj);
+    return this._q(col+"/"+id,()=>this.db.doc(col+"/"+id).set(doc));
+  },
+  async del(col,id){
+    if(col==="lessons") delete LIB.lessons[id]; else if(col==="res") delete LIB.res[id]; else if(col==="runs") delete LIB.runs[id];
+    if(this.mode==="local"){ saveLocal(); return; }
+    await this.ready;
+    return this._q(col+"/"+id,()=>this.db.doc(col+"/"+id).delete());
+  },
+  _q(k,fn){ const p=(this.q[k]||Promise.resolve()).then(fn); this.q[k]=p.catch(()=>{}); return p; }
+};
+const fail = ()=>toast("Could not save. Check your connection and try again.");
+
+/* ---------- slide images ---------- */
+const imgKey = (L,sl)=> L.builtin ? sl.id : L.id+"_"+sl.id;
+async function compress(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const sc=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement("canvas"); c.width=Math.round(img.naturalWidth*sc); c.height=Math.round(img.naturalHeight*sc);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return await new Promise(res=>c.toBlob(b=>res(b),"image/jpeg",0.86));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function imgSet(key,file){
+  const isGif = file.type==="image/gif";
+  const blob = isGif ? file : ((await compress(file).catch(()=>null)) || file);
+  if(Store.mode==="cloud" && Store.assets){
+    const res=await (blob.type ? Store.assets.upload(blob,{type:blob.type}) : Store.assets.upload(blob));
+    const old=Img.ids[key];
+    await Store.db.doc("images/"+key).set({assetId:res.id,at:Date.now()});
+    Img.urls[key]="/_blob/"+res.id; Img.ids[key]=res.id;
+    if(old && old!==res.id){ try{ await Store.assets.delete(old); }catch(e){} }
+  } else {
+    try{ await blobPut("img",key,blob); }catch(e){ toast("Could not save in this browser. It shows for now only."); }
+    if(String(Img.urls[key]||"").startsWith("blob:")) URL.revokeObjectURL(Img.urls[key]);
+    Img.urls[key]=URL.createObjectURL(blob);
+  }
+}
+async function imgDel(key){
+  if(Store.mode==="cloud" && Store.assets){
+    const old=Img.ids[key]; await Store.db.doc("images/"+key).delete();
+    if(old){ try{ await Store.assets.delete(old); }catch(e){} } delete Img.ids[key];
+  } else { try{ await blobDel("img",key); }catch(e){} }
+  delete Img.urls[key];
+}
+
+/* ---------- resources, parts (per lesson + slide) ---------- */
+function slideData(lid,sid){
+  const d = LIB.res[lid] || (LIB.res[lid]={slides:{}});
+  if(!d.slides) d.slides={};
+  const s = d.slides[sid] || (d.slides[sid]={resources:[],parts:[]});
+  if(!s.resources) s.resources=[]; if(!s.parts) s.parts=[];
+  return s;
+}
+const persistRes = lid=>{ Store.put("res",lid,LIB.res[lid]).catch(fail); };
+function allRes(L,sl){ const mine=(((LIB.res[L.id]||{}).slides||{})[sl.id]||{}).resources||[]; return (sl.resources||[]).concat(mine); }
+function allParts(L,sl){ return (((LIB.res[L.id]||{}).slides||{})[sl.id]||{}).parts||[]; }
+function toB64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]||""); r.onerror=()=>rej(r.error); r.readAsDataURL(file); }); }
+async function addFileRes(lid,sid,type,file,label){
+  const item={id:uid("r"),type,label:label||file.name,mime:file.type||""};
+  if(Store.mode==="cloud"){
+    if(!Store.assets) throw {code:"not_granted"};
+    let r;
+    if(type==="audio"){
+      if(file.size*1.34>19.5*1048576) throw {code:"too_large"};
+      const b64=await toB64(file); item.mime=file.type||"audio/mpeg"; item.enc="b64";
+      r=await Store.assets.upload(new Blob([b64],{type:"text/plain"}),{type:"text/plain"});
+    } else { r=await (file.type ? Store.assets.upload(file,{type:file.type}) : Store.assets.upload(file)); }
+    item.assetId=r.id;
+  } else {
+    await blobPut("res",item.id,file); Media.urls[item.id]=URL.createObjectURL(file); item.local=1;
+  }
+  slideData(lid,sid).resources.push(item); persistRes(lid);
+}
+function addLinkRes(lid,sid,url,label){
+  const u=safeUrl(url); if(!u) return false;
+  slideData(lid,sid).resources.push({id:uid("r"),type:"link",url:u,label:label||u,yt:isYT(u)?1:0}); persistRes(lid); return true;
+}
+async function removeRes(lid,sid,id){
+  const d=slideData(lid,sid), it=d.resources.find(r=>r.id===id); if(!it) return;
+  d.resources=d.resources.filter(r=>r.id!==id); persistRes(lid);
+  if(it.assetId && Store.assets){ try{ await Store.assets.delete(it.assetId); }catch(e){} }
+  if(it.local){ try{ await blobDel("res",id); }catch(e){} }
+}
+function addPart(lid,sid,text,note){ slideData(lid,sid).parts.push({id:uid("p"),text,note}); persistRes(lid); }
+function removePart(lid,sid,id){ const d=slideData(lid,sid); d.parts=d.parts.filter(p=>p.id!==id); persistRes(lid); }
+const resUrl = it=> it.local ? (Media.urls[it.id]||"") : (it.assetId ? "/_blob/"+it.assetId : "");
+async function loadAudio(it){
+  if(Media.urls[it.id]) return Media.urls[it.id];
+  if(!it.assetId) return "";
+  const r=await fetch("/_blob/"+it.assetId); const t=(await r.text()).trim();
+  const bin=atob(t), u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+  const url=URL.createObjectURL(new Blob([u8],{type:it.mime||"audio/mpeg"})); Media.urls[it.id]=url; return url;
+}
+
+/* ---------- class runs: stars + notes ---------- */
+const CATS = ["Behavior","Academic","Engagement","Safety","Timing","Idea","Resource","Other"];
+const runsFor = lid=>Object.values(LIB.runs).filter(r=>r.lessonId===lid).sort((a,b)=>(a.at||0)-(b.at||0));
+const curRun = ()=>runsFor(S.lessonId).find(r=>r.id===S.runId)||null;
+const persistRun = r=>{ Store.put("runs",r.id,r).catch(fail); };
+function newRun(label){
+  const n=runsFor(S.lessonId).length+1;
+  const r={id:uid("c"),lessonId:S.lessonId,label:(label||"").trim()||("Class "+n),date:new Date().toISOString().slice(0,10),at:Date.now(),ratings:{},notes:[],review:""};
+  S.runId=r.id; save(); LIB.runs[r.id]=r; persistRun(r); return r;
+}
+function rate(sid,n){ const r=curRun()||newRun(); r.ratings[sid]=n; persistRun(r); }
+function addNote(sid,cat,text){ const r=curRun()||newRun(); r.notes.push({id:uid("n"),slideId:sid,cat,text,at:Date.now()}); persistRun(r); }
+function delNote(id){ const r=curRun(); if(!r) return; r.notes=r.notes.filter(n=>n.id!==id); persistRun(r); }
+function runScore(r,L){
+  const ids=[]; L.grades.forEach(g=>g.slides.forEach(s=>{ if(!s.teacher) ids.push(s.id); }));
+  const rated=ids.filter(id=>typeof r.ratings[id]==="number");
+  const avg=rated.length? rated.reduce((a,id)=>a+r.ratings[id],0)/rated.length : null;
+  return { avg, score:avg==null?null:Math.round(avg*20*10)/10, rated:rated.length, total:ids.length };
+}
+
+/* ---------- settings: image theme ---------- */
+function setTheme(mode,text){ LIB.settings=Object.assign({},LIB.settings,{theme:{mode,text:text||""}}); Store.put("settings","main",LIB.settings).catch(fail); }
+</script>
+<script>
+"use strict";
+/* ---------- current lesson / grade / slide ---------- */
+const LS = ()=> LIB.lessons[S.lessonId] || BUILTIN;
+const grade = ()=>{ const L=LS(); return L.grades.find(g=>g.key===S.grade) || L.grades[0]; };
+const deck = ()=> grade().slides;
+const idxKey = ()=> S.lessonId+":"+grade().key;
+const curIdx = ()=> Math.max(0,Math.min(S.idx[idxKey()]||0, deck().length-1));
+const cur = ()=> deck()[curIdx()];
+
+/* ---------- image prompt theme ---------- */
+const THEMES = ["dogs and cats","volcanoes","outer space","under the ocean","dinosaurs","jungle explorers","robots","pirates","farm animals","arctic animals","superheroes","desert adventure","castles and dragons","trains","bugs and butterflies"];
+const RT = {};
+function themeText(sid){
+  const t=(LIB.settings&&LIB.settings.theme)||{};
+  if(t.mode==="custom" && t.text) return t.text;
+  if(t.mode==="random") return RT[sid] || (RT[sid]=THEMES[Math.floor(Math.random()*THEMES.length)]);
+  return "";
+}
+function buildPrompt(sl){
+  const g=grade(), th=themeText(sl.id);
+  return (sl.scene||"")+" Style: "+(sl.style||"bright cartoon")+"."+(g.cast?" "+g.cast:"")
+    +(th ? " Theme: show this scene in a "+th+" world, with "+th+" props, background details and costumes. Keep the same action and any color roles."
+         : (g.setting ? " Set in "+g.setting+"." : ""));
+}
+
+/* ---------- math tool ---------- */
+const M = { max:5, q:null, show:false };
+function mathNew(){
+  const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  if(Math.random()<0.5){ const a=r(0,M.max), b=r(0,M.max-a); M.q={t:a+" + "+b, a:a+b}; }
+  else { const a=r(1,M.max), b=r(0,a); M.q={t:a+" − "+b, a:a-b}; }
+  M.show=false;
+}
+function mathHTML(){
+  const q = M.q ? esc(M.q.t)+" = "+(M.show?"<em>"+M.q.a+"</em>":"?") : "Math time";
+  return '<div class="mathbox" id="mathbox"><div class="mathq" aria-live="polite">'+q+'</div><div class="row">'
+    +'<button class="btn small primary" data-act="mnew">New question</button>'
+    +'<button class="btn small" data-act="mshow">Show answer</button>'
+    +'<button class="btn small" data-act="mmax">Within '+M.max+'</button></div></div>';
+}
+
+/* ---------- resource display ---------- */
+function mediaHTML(it){
+  const u=resUrl(it), lab=esc(it.label||"");
+  if(it.type==="gif") return u ? '<div class="media"><img class="gif" src="'+esc(u)+'" alt="'+lab+'"></div>' : "";
+  if(it.type==="video") return u ? '<div class="media"><video controls playsinline preload="metadata" src="'+esc(u)+'" aria-label="'+lab+'"></video></div>' : "";
+  if(it.type==="audio"){
+    if(Media.urls[it.id]) return '<div class="media"><span class="note" style="margin:0">'+lab+'</span><audio controls src="'+esc(Media.urls[it.id])+'"></audio></div>';
+    return '<div class="media"><button class="btn" data-act="playaudio" data-id="'+esc(it.id)+'">Play audio: '+lab+'</button></div>';
+  }
+  return "";
+}
+function linkHTML(it){
+  const u=esc(it.url||"");
+  if(it.yt) return '<a class="ytcard" href="'+u+'" target="_blank" rel="noopener noreferrer"><span class="ytplay" aria-hidden="true"></span><span><b>'+esc(it.label||"Video")+'</b><small>Opens on YouTube in a new tab</small></span></a>';
+  return '<a class="linkchip" href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(it.label||it.url)+' <span aria-hidden="true">↗</span></a>';
+}
+
+/* ---------- bars ---------- */
+function renderGradeBar(){
+  const L=LS(), g=grade();
+  $("#gradebar").innerHTML = L.grades.length>1 ? L.grades.map(x=>'<button class="btn" data-act="grade" data-k="'+esc(x.key)+'" aria-pressed="'+(x.key===g.key)+'">'+esc(x.label)+'</button>').join("") : "";
+  $("#brandSub").textContent = L.title;
+}
+function renderRunBar(){
+  const L=runsFor(S.lessonId); if(S.runId && !L.find(r=>r.id===S.runId)) S.runId=null;
+  const first = S.runId ? "" : '<option value="" selected>'+(L.length?"Pick a class":"No class yet")+'</option>';
+  const opts = L.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===S.runId?" selected":"")+'>'+esc(r.label)+'</option>').join("");
+  const rf = $("#runForm"), open = rf && !rf.hidden;
+  $("#runbar").innerHTML = '<span>Scoring class:</span><select id="runSel" aria-label="Class being scored">'+first+opts+'</select>'
+    +'<button class="btn small" data-act="showrunform">New class</button>'
+    +'<form id="runForm" data-form="run"'+(open?"":" hidden")+'><input type="text" id="runLabel" placeholder="Name, like K Period 2" aria-label="Class name"><button class="btn small primary" type="submit">Create</button></form>';
+}
+
+/* ---------- slides ---------- */
+function renderSlides(){
+  const L=LS(), g=grade(), arr=g.slides, i=curIdx(), sl=arr[i];
+  renderGradeBar(); renderRunBar();
+  let n=0;
+  $("#rail").innerHTML = arr.map((s,j)=>{
+    const label = s.teacher ? "Prep" : (++n)+". "+s.title;
+    return '<button class="chip'+(s.teacher?" t":"")+'" data-act="goto" data-i="'+j+'"'+(j===i?' aria-current="true"':'')+'>'+esc(label)+'</button>';
+  }).join("");
+  const url=Img.urls[imgKey(L,sl)];
+  const res=allRes(L,sl);
+  const slot = sl.teacher ? "" : (url ? '<div class="imgslot has"><img src="'+esc(url)+'" alt="'+esc(sl.title)+' illustration"></div>'
+    : (S.present ? "" : '<div class="imgslot"><div>Image goes here.<br>Copy the prompt below, generate it, then add it.</div></div>'));
+  const media=res.filter(r=>r.type!=="link").map(mediaHTML).join("");
+  const links=res.filter(r=>r.type==="link");
+  const linksH=links.length ? '<div class="linkrow">'+links.map(linkHTML).join("")+'</div>' : "";
+  const side=slot+media+linksH;
+  const key = sl.key ? '<div class="key" aria-label="Color key"><span><i style="background:var(--leader)"></i>Leader</span><span><i style="background:var(--group)"></i>Team</span><span><i style="background:var(--comm)"></i>Communicator</span></div>' : "";
+  const lis=(sl.big||[]).map(t=> t[0]==="!" ? '<li class="rule">'+fmt(t.slice(1))+'</li>' : '<li>'+fmt(t)+'</li>').join("");
+  const st=$("#stage");
+  st.className="stage"+(side?"":" noimg")+(sl.key?" haskey":"");
+  const sh = key+'<div><div class="kick">'+esc(sl.kick||"")+'</div><h2>'+esc(sl.title)+'</h2><ul class="big">'+lis+'</ul>'+(sl.tool==="math"?mathHTML():"")+'</div>'+(side?'<div class="side">'+side+'</div>':"");
+  if(st._h!==sh){ st.innerHTML=sh; st._h=sh; }
+  $("#count").textContent=(i+1)+" / "+arr.length;
+  $("#prev").disabled=i===0; $("#next").disabled=i===arr.length-1;
+  renderTeacher(L,sl);
+}
+
+const listHTML = items=>"<ul>"+items.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul>";
+function renderTeacher(L,sl){
+  const lid=L.id, sid=sl.id; let h="";
+  if((sl.say&&sl.say.length)||sl.short) h+='<div class="panel say"><h3>Say</h3>'+(sl.short?'<p class="note" style="margin:0 0 8px">'+esc(sl.short)+'</p>':'')+listHTML(sl.say||[])+'</div>';
+  if((sl.doit&&sl.doit.length)||(sl.teks&&sl.teks.length)||sl.tool==="words"){
+    h+='<div class="panel do"><h3>Do</h3>'+listHTML(sl.doit||[])
+      +(sl.tool==="words"?'<div class="row" style="margin-top:10px"><button class="btn small primary" data-act="tab" data-tab="words">Open Word Picker</button></div>':"")
+      +((sl.teks&&sl.teks.length)?'<div class="pp"><span class="tag">TEKS</span>'+sl.teks.map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+'</div>':"")+'</div>';
+  }
+  if(sl.script&&sl.script.length) h+='<div class="panel wide"><h3>Full script</h3><details class="sc" open><summary>Step by step, word for word</summary><ol>'+sl.script.map(t=>"<li>"+esc(t)+"</li>").join("")+'</ol></details></div>';
+
+  // parts
+  const parts=allParts(L,sl);
+  h+='<div class="panel"><h3>Your parts</h3>'
+    +(parts.length?'<ul class="list">'+parts.map(p=>'<li class="item"><div>'+esc(p.text)+(p.note?'<small>Note: '+esc(p.note)+'</small>':'')+'</div><button class="btn small" data-act="delpart" data-id="'+esc(p.id)+'" aria-label="Remove part">Remove</button></li>').join("")+'</ul>':'<p class="note" style="margin:0">Add your own steps to this section. Each part can have a note.</p>')
+    +'<form class="frm" data-form="part"><label class="f">New part<input type="text" id="partText" placeholder="What happens in this part?" required></label><label class="f">Note (optional)<input type="text" id="partNote" placeholder="A reminder for you or a sub"></label><div><button class="btn small primary" type="submit">Add part</button></div></form></div>';
+
+  // resources
+  const res=allRes(L,sl), up=Store.canUpload;
+  h+='<div class="panel"><h3>Resources</h3>'
+    +(res.length?'<ul class="list">'+res.map(r=>'<li class="item"><div>'+esc(r.label||r.url||"File")+'<small>'+({link:"Link",audio:"Audio",video:"Video",gif:"GIF or picture"}[r.type]||r.type)+(r.locked?" · built in":"")+'</small></div>'+(r.locked?"":'<button class="btn small" data-act="delres" data-id="'+esc(r.id)+'" aria-label="Remove resource">Remove</button>')+'</li>').join("")+'</ul>':'<p class="note" style="margin:0">Add a link, song, video, or GIF. It shows on the slide.</p>')
+    +'<form class="frm" data-form="res"><div class="row"><label class="f">Type<select id="resType"><option value="link">Link</option>'+(up?'<option value="audio">Audio (mp3)</option><option value="video">Video (mp4, webm)</option><option value="gif">GIF or picture</option>':'')+'</select></label>'
+    +'<label class="f">Name<input type="text" id="resLabel" placeholder="What is it?"></label></div>'
+    +'<label class="f" id="resUrlWrap">Link<input type="url" id="resUrl" placeholder="https://..."></label>'
+    +'<label class="f" id="resFileWrap" hidden>File<input type="file" id="resFile"></label>'
+    +'<div><button class="btn small primary" type="submit">Add</button></div></form>'
+    +'<p class="note">Tip: if an mp3 will not play, turn it into an mp4 with any free converter and add it as video.</p></div>';
+
+  // rate + notes
+  const run=curRun(), rating=(run&&typeof run.ratings[sid]==="number")?run.ratings[sid]:null;
+  const notes=run?run.notes.filter(n=>n.slideId===sid):[];
+  h+='<div class="panel wide"><h3>Rate and notes</h3>'
+    +'<p class="note" style="margin:0 0 8px">'+(run?'Scoring <b>'+esc(run.label)+'</b>.':'No class picked yet. Your first rating or note creates Class 1.')+'</p>'
+    +(sl.teacher?'':'<div class="stars" role="group" aria-label="Rating from 0 to 5 stars"><button class="zero'+(rating===0?" on":"")+'" data-act="rate" data-n="0" aria-label="0 stars">0</button>'
+      +[1,2,3,4,5].map(k=>'<button class="'+(rating!=null&&k<=rating?"on":"")+'" data-act="rate" data-n="'+k+'" aria-label="'+k+' star'+(k>1?"s":"")+'">★</button>').join("")
+      +'<span class="note" style="margin:0 0 0 6px">'+(rating==null?"Not rated":rating+" of 5")+'</span></div>')
+    +'<form class="frm" data-form="note"><div class="row"><label class="f">Kind of note<select id="noteCat">'+CATS.map(c=>'<option>'+c+'</option>').join("")+'</select></label></div>'
+    +'<label class="f">Note<textarea id="noteText" placeholder="What happened? What would you change?" required></textarea></label><div><button class="btn small primary" type="submit">Add note</button></div></form>'
+    +(notes.length?'<ul class="list" style="margin-top:12px">'+notes.map(n=>'<li class="item"><div><span class="cat">'+esc(n.cat)+'</span> '+esc(n.text)+'</div><button class="btn small" data-act="delnote" data-id="'+esc(n.id)+'" aria-label="Remove note">Remove</button></li>').join("")+'</ul>':"")+'</div>';
+
+  // image prompt
+  if(!sl.teacher){
+    const key=imgKey(L,sl), has=!!Img.urls[key], th=themeText(sl.id);
+    h+='<div class="panel wide"><h3>Image</h3>'
+      +'<div class="copyhead"><span>Prompt for Gemini or Canva</span><button class="btn small" data-act="copy" data-target="pPrompt">Copy</button></div>'
+      +'<pre class="copybox" id="pPrompt">'+esc(buildPrompt(sl))+'</pre>';
+    if(sl.video) h+='<div class="copyhead"><span>10-second video idea</span><button class="btn small" data-act="copy" data-target="pVideo">Copy</button></div><pre class="copybox" id="pVideo">'+esc(sl.video)+'</pre>';
+    h+='<p class="note">'+(th?"Theme in this prompt: <b>"+esc(th)+"</b>. ":"No theme yet. ")+'<button class="btn small" data-act="tab" data-tab="home">Change theme</button></p><div class="row" style="margin-top:8px">';
+    if(up){
+      h+='<label class="btn small primary" style="cursor:pointer">'+(has?"Replace image":"Add image")+'<input type="file" id="imgfile" accept="image/*" hidden></label>';
+      if(has) h+='<button class="btn small" data-act="rmimg">Remove image</button>';
+    } else if(!has){ h+='<span class="note" style="margin:0">The owner adds the images for this deck.</span>'; }
+    h+='</div><p class="note">'+(Store.mode==="cloud"?"Images are saved with this page, so a sub sees them too.":"Images are saved in this browser only.")+' Tip: leave words out of the image. The slide already has them.</p></div>';
+  }
+  $("#teacher").innerHTML=h;
+}
+
+function go(d){
+  const arr=deck(); let i=curIdx()+d;
+  while(i>=0 && i<arr.length && S.present && arr[i].teacher) i+=d;
+  if(i<0||i>=arr.length) return;
+  S.idx[idxKey()]=i; save(); clearSlideDrafts(); renderSlides();
+}
+</script>
+<script>
+"use strict";
+/* ---------- the lesson file shape (given to the AI) ---------- */
+const SCHEMA_DOC = `{
+  "format": "lily-path-lesson-v1",
+  "title": "Lesson name",
+  "date": "2026-10-22",
+  "short": "Two or three sentences a substitute can read in 20 seconds.",
+  "teks": ["K.1A Short plain-English version of the standard"],
+  "grades": [
+    {
+      "key": "k",
+      "label": "Kinder",
+      "cast": "Recurring characters for the pictures, or an empty string.",
+      "setting": "a bright school gym",
+      "slides": [
+        {
+          "id": "k0",
+          "teacher": true,
+          "title": "Prep",
+          "kick": "Before kids arrive",
+          "big": ["Cones set", "Music ready"],
+          "say": [],
+          "doit": ["Set 4 cones in a square"],
+          "script": ["1. Set 4 cones in a square.", "2. Test the speaker."],
+          "short": "Set up cones and music.",
+          "teks": [],
+          "scene": "",
+          "style": "",
+          "video": "",
+          "tool": "",
+          "key": false,
+          "resources": []
+        },
+        {
+          "id": "k1",
+          "teacher": false,
+          "title": "Warm-up",
+          "kick": "Minutes 0 to 3",
+          "big": ["Walk in a circle", "!Freeze when the music stops", "Be a [y:statue]"],
+          "say": ["Walk like a quiet mouse.", "Freeze like a statue."],
+          "doit": ["Start the music.", "Stop it after 20 seconds."],
+          "script": ["0:00 Say: Walk like a quiet mouse.", "0:20 Stop the music. Say: Freeze!"],
+          "short": "Walk, freeze, repeat.",
+          "teks": ["K.2A Short plain-English version of the standard"],
+          "scene": "Kids walking in a circle, then frozen in a statue pose with arms out and big smiles.",
+          "style": "bright friendly cartoon, thick outlines, flat colors, no text",
+          "video": "",
+          "tool": "",
+          "key": false,
+          "resources": [{"type": "link", "label": "Freeze dance song", "url": "https://example.com/real-link-only"}]
+        }
+      ]
+    }
+  ],
+  "words": null
+}`;
+
+const SCHEMA_RULES = `RULES FOR THE LESSON FILE
+- "format" must be exactly "lily-path-lesson-v1".
+- Every slide has every field shown above. Use "" or [] when a field is empty.
+- "grades": one entry per grade or class type. Each needs its own "key" (letters and numbers only), "label", "cast", and "slides".
+- "id": must be different on every slide in the whole lesson. Letters and numbers only. Good: k0, k1, k2, g30, g31.
+- "teacher": true means a private slide only the teacher sees (prep, notes, reminders). Kids never see it. Make the first slide of each grade a prep slide. Give prep slides an empty "scene".
+- "big": what kids see on the screen. 1 to 5 SHORT lines, 8 words or fewer each. Start a line with ! to make it a highlighted rule. Wrap a word like [y:this] to make it yellow. You can also use [g:word] green, [b:word] blue, [o:word] orange.
+- "say": exact words the teacher says out loud. Short sentences. One idea per line.
+- "doit": what the teacher does with hands and body: where to stand, what to hand out, when to start the music.
+- "script": numbered steps in order, with times. Write it so a stranger could run this slide. Include one "If ___ then ___" line for the most likely problem.
+- "short": ONE sentence short version of the slide.
+- "teks": standards that fit this slide. Only codes you are confident are real. Use [] if unsure.
+- "setting" (on each grade): a short phrase for where the lesson happens, like "a bright school gym". The app uses it only when no picture theme is chosen.
+- "scene": 1 or 2 sentences about the picture: who is doing what, body positions, colors. Describe ONLY the action and the people. Do NOT name a place, a theme, or a world. The app adds the theme later. Never put words or letters inside the picture.
+- "style": one short phrase used for ALL pictures, the same on every slide.
+- "video": optional. One sentence idea for a 10 second animated clip. Or "".
+- "tool": "" normally. "math" adds a quick-math box. "words" adds a button to the word game. Leave "" unless the teacher asked.
+- "key": false unless the lesson uses green, blue and orange role colors. Leave false.
+- "resources": only real links the teacher gave you or approved. Format: {"type":"link","label":"Name","url":"https://..."}. Never invent a web address.
+- "words": null unless the teacher asked for a word game. If asked, use this shape: {"levels":["Starter","Builder","Challenge"],"bank":[{"w":"CAN","p":"c_n","l":1,"s":1}],"storyTitle":"Title","storyText":"A {{CAN}} story with {{WORD}} blanks."}. "w" is the word in capitals, "p" is the same word with some letters replaced by _, "l" is level 1 to 3, "s" is 1 if the word is used in the story.
+- Valid JSON only: straight double quotes, no comments, no trailing commas.`;
+
+/* ---------- the setup wizard prompt (copy and paste into any AI) ---------- */
+const WIZARD_PROMPT = `You are "Lesson Buddy", a patient, friendly guide. I am a teacher who knows almost nothing about technology or AI. Help me build a lesson that I can upload into an app called Lily Path.
+
+HOW YOU MUST BEHAVE
+- Use plain, simple words. No tech terms. If you must use a word like "file", explain it in a few words.
+- Ask ONE question at a time. Wait for my answer. Never send a list of questions.
+- With every question, give me 2 or 3 example answers I can pick from, and say "or tell me you are not sure and I will choose for you".
+- If my answer is short or messy, accept it and organize it for me. Never make me rewrite anything.
+- Keep your messages short. Tell me where we are, like "Question 3 of about 9".
+- If anything I plan could be unsafe for kids, gently suggest a safer way.
+- Never make me copy or paste anything until the very end.
+
+WHAT TO ASK ME (one at a time, in this order, skip anything I already told you)
+1. Which grade or grades is this for, and how many minutes is each class?
+2. What subject is it, and what should kids be able to do by the end?
+3. What state am I in? (Default to Texas if I say Texas or do not know.)
+4. Where do I teach it (gym, classroom, outside) and what equipment do I have?
+5. About how many kids per class, and is there anything I should plan around (new students, kids who need extra help)?
+6. Will I teach it, or a substitute? How much will they know?
+7. What routines do I always use (attention signal, lining up, songs, brain breaks)?
+8. What are the main parts of the lesson? Offer to suggest a simple order, like warm-up, teach, practice, game, wrap-up.
+9. Are there songs, videos, websites or files I already plan to use? (Do not ask about picture themes. I choose that inside the app.)
+10. How detailed should the script be: normal, or extra detailed? Explain extra detailed means every step, every line, and what to do when things go wrong.
+
+BEFORE YOU WRITE THE FINAL LESSON (the feedback step)
+Show me a plain outline: each part with minutes. Then give me honest feedback in 4 short bullets: what is strong, what is risky (timing, safety, kids waiting too long, messy transitions), what could be simpler, and what a substitute might get confused by. Then ask "Want to change anything?" Only move on when I say it looks good.
+
+RESOURCES
+Suggest helpful resources by name: songs, videos, activity ideas, equipment, free websites. Only name things you are sure exist. Never invent a web address. If you are not sure of the exact link, tell me what to search for. Only put a link into the lesson file if I gave it to you, or you are certain it is real and I said yes.
+
+STANDARDS (TEKS)
+If I am in Texas, pick the TEKS standards that fit my grade and subject. Give each code with a short plain-English line. Only use codes you are confident are real. If you are not sure, say so and tell me to double check at tea.texas.gov. Put them in the "teks" lists (whole lesson and each slide). If I am not in Texas, use my state's standards or leave the lists empty.
+
+THE SCRIPT
+Write it so that anyone, even a person who has never taught this, could run the class. Fill in "say", "doit", "script" and "short" for every slide (see the rules below). Also write a "short" for the whole lesson: 2 or 3 sentences a substitute can read in 20 seconds. If I asked for extra detailed, make every "script" longer: exact words, exact moves, times, and an "If ___ then ___" for each likely problem.
+
+THE FINAL ANSWER
+When I say the outline is good, give me exactly two things, in this order:
+PART 1, headed "MASTER PROMPT": a clear, organized summary of everything I told you (grades, minutes, goal, space, equipment, routines, parts, resources, decisions, standards, script detail). Write it so I can paste it into any AI chat in the future to rebuild or change this lesson. Put it inside one code block so I can copy it in one tap.
+PART 2, headed "LESSON FILE": the whole lesson in the exact shape below. Put it inside ONE code block with nothing else in that block.
+Then tell me in 3 short steps: tap copy on the LESSON FILE, open Lily Path, go to Home, paste it into "Add a lesson" and tap the button.
+If I later paste back a MASTER PROMPT, use it as my answers and skip the questions I already answered.
+
+=== LESSON FILE SHAPE START ===
+` + SCHEMA_DOC + `
+=== LESSON FILE SHAPE END ===
+
+` + SCHEMA_RULES + `
+
+START NOW. Say hello in one short sentence, then ask question 1.`;
+
+/* ---------- plain-text view of a lesson (for the plan prompt) ---------- */
+const plain = s=>String(s||"").replace(/\[([gboy]):([^\]]+)\]/g,"$2").replace(/^!/,"RULE: ");
+function planText(){
+  const L=LS(); let n=0, out=[];
+  out.push("I am a teacher. Read my lesson plan below and explain it back to me in detail so I fully understand the day.\n\nWhat I need from you:\n1. A short overview in 3 sentences.\n2. For each class, a step-by-step run of the day in order: what happens, what I say, what I do, what the kids do, and how long it should take.\n3. A prep checklist: what to set up before kids arrive.\n4. The 3 places most likely to go wrong and what to do about each.\n5. Anything missing or unclear in my plan. Ask me about those at the end.\n\nUse plain words and short sentences. If a section has little detail, say so and suggest what to add.\n");
+  out.push("LESSON: "+L.title+(L.date?" ("+L.date+")":""));
+  if(L.short) out.push("Summary: "+L.short);
+  if(L.teks&&L.teks.length) out.push("Standards: "+L.teks.join("; "));
+  L.grades.forEach(g=>{
+    out.push("\n=== "+g.label+" ===");
+    g.slides.forEach((s,i)=>{
+      out.push("\nSlide "+(i+1)+": "+s.title+(s.teacher?" (teacher prep only, kids do not see this)":""));
+      if(s.kick) out.push("  Label: "+s.kick);
+      if(s.big&&s.big.length) out.push("  On screen: "+s.big.map(plain).join(" / "));
+      if(s.say&&s.say.length) out.push("  Say: "+s.say.join(" | "));
+      if(s.doit&&s.doit.length) out.push("  Do: "+s.doit.join(" | "));
+      if(s.script&&s.script.length) out.push("  Script: "+s.script.join(" | "));
+      if(s.short) out.push("  Short version: "+s.short);
+      if(s.teks&&s.teks.length) out.push("  Standards: "+s.teks.join("; "));
+      const parts=allParts(L,s); if(parts.length) out.push("  My added parts: "+parts.map(p=>p.text+(p.note?" ("+p.note+")":"")).join(" | "));
+      const res=allRes(L,s); if(res.length) out.push("  Resources: "+res.map(r=>(r.label||"File")+(r.type==="link"?" ("+r.url+")":" ["+r.type+" file]")).join(" | "));
+    });
+  });
+  if(L.words) out.push("\nWord game: "+L.words.bank.length+" words in "+L.words.levels.length+" levels, with a fill-in story called \""+L.words.storyTitle+"\".");
+  return out.join("\n");
+}
+
+/* ---------- lesson file checking ---------- */
+function normalizeLesson(o){
+  if(!o || typeof o!=="object" || !Array.isArray(o.grades) || !o.grades.length) throw new Error("This does not look like a lesson file. Ask the AI to use the exact shape it was given.");
+  const str=(v,d)=> typeof v==="string" ? v.trim() : (v==null ? (d||"") : String(v));
+  const arr=v=> Array.isArray(v) ? v.map(x=>str(x)).filter(Boolean) : (typeof v==="string"&&v.trim() ? [v.trim()] : []);
+  const usedId={}, usedKey={};
+  const L={ title:str(o.title,"New lesson")||"New lesson", date:str(o.date).slice(0,10), short:str(o.short), teks:arr(o.teks), grades:[], words:null };
+  o.grades.slice(0,8).forEach((g,gi)=>{
+    if(!g || typeof g!=="object") return;
+    let key=str(g.key,"g"+(gi+1)).replace(/[^A-Za-z0-9]/g,"")||("g"+(gi+1));
+    while(usedKey[key]) key+="x"; usedKey[key]=1;
+    const slides=[];
+    (Array.isArray(g.slides)?g.slides:[]).slice(0,60).forEach((s,si)=>{
+      if(!s || typeof s!=="object") return;
+      let id=str(s.id).replace(/[^A-Za-z0-9_-]/g,"")||(key+si);
+      while(usedId[id]) id+="x"; usedId[id]=1;
+      const sl={ id, title:str(s.title,"Slide "+(si+1))||("Slide "+(si+1)), kick:str(s.kick), big:arr(s.big), say:arr(s.say), doit:arr(s.doit), script:arr(s.script), short:str(s.short), teks:arr(s.teks), scene:str(s.scene), style:str(s.style), video:str(s.video), teacher:!!s.teacher, tool:(s.tool==="math"||s.tool==="words")?s.tool:"", key:!!s.key, resources:[] };
+      if(!sl.teacher && !sl.big.length) sl.big=[sl.title];
+      (Array.isArray(s.resources)?s.resources:[]).slice(0,12).forEach((r,ri)=>{
+        if(!r || typeof r!=="object") return;
+        const u=safeUrl(r.url); if(!u) return;
+        sl.resources.push({id:id+"-r"+ri,type:"link",label:str(r.label,u)||u,url:u,yt:isYT(u)?1:0,locked:1});
+      });
+      slides.push(sl);
+    });
+    if(slides.length) L.grades.push({key,label:str(g.label,key)||key,cast:str(g.cast),setting:str(g.setting),slides});
+  });
+  if(!L.grades.length) throw new Error("The lesson has no slides in it.");
+  const w=o.words;
+  if(w && typeof w==="object" && Array.isArray(w.bank) && typeof w.storyText==="string"){
+    const bank=w.bank.slice(0,200).map(b=>({w:str(b&&b.w).toUpperCase().replace(/[^A-Z]/g,""),p:str(b&&b.p).toLowerCase(),l:Math.max(1,Math.min(3,parseInt(b&&b.l,10)||1)),s:b&&b.s?1:0})).filter(b=>b.w&&b.p);
+    if(bank.length) L.words={ levels:(Array.isArray(w.levels)&&w.levels.length===3)?w.levels.map(x=>str(x)):["Starter","Builder","Challenge"], bank, storyTitle:str(w.storyTitle,"Story"), storyText:w.storyText };
+  }
+  if(JSON.stringify(L).length>240000) throw new Error("This lesson is too big to save. Ask the AI to make the scripts a little shorter.");
+  return L;
+}
+function lessonJSON(L){ return JSON.stringify({format:"lily-path-lesson-v1",title:L.title,date:L.date||"",short:L.short||"",teks:L.teks||[],grades:L.grades,words:L.words||null},null,2); }
+
+/* ---------- import and export ---------- */
+function backupObj(){ const l={}; for(const id in LIB.lessons) if(!LIB.lessons[id].builtin) l[id]=LIB.lessons[id]; return {format:"lily-path-backup-v1",at:new Date().toISOString(),lessons:l,res:LIB.res,runs:LIB.runs,settings:LIB.settings}; }
+async function restoreBackup(o){
+  let n=0;
+  for(const id in (o.lessons||{})){ if(id==="oct22") continue; const L=normalizeLesson(o.lessons[id]); L.id=id; await Store.put("lessons",id,L); n++; }
+  for(const id in (o.res||{})) await Store.put("res",id,o.res[id]);
+  for(const id in (o.runs||{})) await Store.put("runs",id,o.runs[id]);
+  if(o.settings && o.settings.theme) await Store.put("settings","main",Object.assign({},LIB.settings,{theme:o.settings.theme}));
+  return "Backup restored. "+n+" lesson"+(n===1?"":"s")+", "+Object.keys(o.runs||{}).length+" class score"+(Object.keys(o.runs||{}).length===1?"":"s")+".";
+}
+</script>
+<script>
+"use strict";
+/* ---------- Lily Path file v2 ----------
+   The AI writes short fill-in-the-blank slides ("lily":2). The app builds the big text,
+   script, picture prompt and links from the blanks. Check first, save second. */
+const SLIDE_TYPES = { prep:"Prep", hook:"Hook", teach:"Teach", game:"Game", video:"Video", groups:"Groups", exit:"Wrap-up", routine:"Routine" };
+let PEND = null;   // the file that was checked and is waiting for Save
+
+const vStr = (v,d)=> typeof v==="string" ? v.trim() : (v==null ? (d||"") : String(v));
+const vArr = v=> Array.isArray(v) ? v.map(x=>vStr(x)).filter(Boolean) : (typeof v==="string"&&v.trim() ? [v.trim()] : []);
+const stripNum = x=> x.replace(/^\s*step\s*\d+\s*[:.\-]\s*/i,"").replace(/^\s*\d{1,2}[.)]\s+/,"");
+const words = s=> String(s).replace(/\[[gboy]:([^\]]+)\]/g,"$1").trim().split(/\s+/).filter(Boolean).length;
+const fmtTime = sec=>{ sec=Math.max(0,parseInt(sec,10)||0); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); };
+function withStart(u,start){
+  start=parseInt(start,10)||0; if(!start||!isYT(u)) return u;
+  try{ const x=new URL(u); if(!x.searchParams.has("t")) x.searchParams.set("t",String(start)); return x.href; }catch(e){ return u; }
+}
+
+/* ---------- tolerant JSON reading (AI chats make small typing mistakes) ---------- */
+function cleanJson(raw){
+  let out="", inStr=false, esc=false; const f={comments:0,commas:0,breaks:0};
+  for(let i=0;i<raw.length;i++){
+    const c=raw[i];
+    if(inStr){
+      if(esc){ out+=c; esc=false; }
+      else if(c==="\\"){ out+=c; esc=true; }
+      else if(c==='"'){ out+=c; inStr=false; }
+      else if(c==="\n"){ out+="\\n"; f.breaks++; }
+      else if(c==="\r"){ }
+      else if(c==="\t"){ out+="\\t"; }
+      else out+=c;
+      continue;
+    }
+    if(c==='"'){ inStr=true; out+=c; continue; }
+    if(c==="/" && raw[i+1]==="/"){ while(i<raw.length && raw[i]!=="\n") i++; f.comments++; out+="\n"; continue; }
+    if(c==="/" && raw[i+1]==="*"){ const e=raw.indexOf("*/",i+2); i = e<0 ? raw.length : e+1; f.comments++; continue; }
+    if(c===","){ let j=i+1; while(j<raw.length && /\s/.test(raw[j])) j++; if(raw[j]==="}"||raw[j]==="]"){ f.commas++; continue; } }
+    out+=c;
+  }
+  const fixes=[];
+  if(f.commas) fixes.push("removed "+f.commas+" extra comma"+(f.commas===1?"":"s"));
+  if(f.comments) fixes.push("removed "+f.comments+" comment"+(f.comments===1?"":"s"));
+  if(f.breaks) fixes.push("fixed "+f.breaks+" line break"+(f.breaks===1?"":"s")+" inside text");
+  return {text:out,fixes,breaks:f.breaks};
+}
+function looseParse(text){
+  const a=text.indexOf("{"), b=text.lastIndexOf("}");
+  if(a<0||b<a) return {err:"I could not find a Lily Path file in that text. It should start with { and end with }."};
+  const raw=text.slice(a,b+1);
+  try{ return {obj:JSON.parse(raw),fixes:[]}; }catch(e1){}
+  const c=cleanJson(raw);
+  try{ return {obj:JSON.parse(c.text),fixes:c.fixes}; }
+  catch(e2){
+    const m=/position (\d+)/.exec(String(e2.message)); let near="";
+    if(m){ const p=+m[1]; near=c.text.slice(Math.max(0,p-45),p+45).replace(/\s+/g," ").trim(); }
+    return {err:"The file has a typing mistake"+(near?' near: "'+near+'"':"")+". The AI needs to send the whole file again."};
+  }
+}
+
+/* ---------- building one slide from its blanks ---------- */
+function expandSlide(s,sp,ctx){
+  const {E,W,key,si}=ctx;
+  if(!s||typeof s!=="object"||Array.isArray(s)){ E(sp,"This slide is not filled in right."); return null; }
+  let t=vStr(s.t).toLowerCase();
+  if(!t){ W(sp,'No "t" (type). Treated as "teach".'); t="teach"; }
+  else if(!SLIDE_TYPES[t]){ W(sp,'Unknown type "'+t+'". Treated as "teach".'); t="teach"; }
+  if(t==="routine"){ E(sp,"Routine slides are not supported yet. Write the slides out in full."); return null; }
+  let id=key+si; while(ctx.usedId[id]) id+="x"; ctx.usedId[id]=1;
+  const title=vStr(s.title); if(!title) E(sp+".title","This slide needs a title.");
+  const T=title||("Slide "+(si+1));
+  let big=vArr(s.big), say=vArr(s.say), doit=vArr(s.do||s.doit), steps=vArr(s.steps||s.script).map(stripNum);
+  const min=Number(s.min)>0 ? Math.round(Number(s.min)) : 0;
+  const resources=[]; const teacher=(t==="prep");
+  const goal=vStr(s.goal), rules=vArr(s.rules), cue=vStr(s.cue), how=vStr(s.how), roles=vArr(s.roles), ask=vStr(s.ask), vurl=vStr(s.url), start=s.start;
+
+  if(t==="game"){
+    if(!goal) E(sp+".goal",'A game needs a "goal" (one short line).');
+    if(!rules.length) E(sp+".rules",'A game needs "rules" (1 to 4 short lines).');
+    if(!big.length) big=[goal||T].concat(rules).concat(cue?["!"+cue]:[]);
+    if(!say.length) say=["Today's game is "+(goal||T)+"."].concat(rules);
+    if(!doit.length) doit=[cue?"Start the game. The signal is: "+cue:"Show the rules, then start the game."];
+  } else if(t==="video"){
+    const u=safeUrl(vurl);
+    if(!u) E(sp+".url",'A video slide needs a "url" that is a web address.');
+    else resources.push({id:id+"-v",type:"link",label:vStr(s.label)||T,url:withStart(u,start),yt:isYT(u)?1:0,locked:1});
+    if(!big.length) big=[T];
+    if(!doit.length) doit=["Tap the video card to play it"+((parseInt(start,10)||0)?" at "+fmtTime(start):"")+"."];
+  } else if(t==="groups"){
+    if(!how) E(sp+".how",'A groups slide needs "how" (how kids form the groups).');
+    if(!big.length) big=[how||T].concat(roles);
+    if(!say.length && how) say=[how];
+    if(!doit.length && roles.length) doit=["Name each role before kids move."];
+  } else if(t==="exit"){
+    if(!ask) E(sp+".ask",'A wrap-up slide needs "ask" (the question for kids).');
+    if(!big.length) big=[ask||T];
+    if(!say.length && ask) say=[ask];
+  } else if(t==="prep"){
+    if(!doit.length) E(sp+".do",'A prep slide needs "do" (the setup checklist).');
+    if(!big.length) big=doit.slice();
+  } else {
+    if(!big.length){ W(sp+".big","No big lines for kids to read. Using the title."); big=[T]; }
+  }
+  big.forEach((b,i)=>{ const n=words(b); if(n>10) W(sp+".big["+i+"]","Long for a projector ("+n+" words). Try 8 or fewer."); });
+  if(!teacher && !say.length) W(sp+".say","No say lines. A substitute would have nothing to read aloud.");
+  if(!steps.length){ doit.forEach(x=>steps.push(teacher?x:"Do: "+x)); if(!teacher) say.forEach(x=>steps.push("Say: "+x)); }
+  (Array.isArray(s.link)?s.link:[]).slice(0,10).forEach((l,li)=>{
+    const u=l&&typeof l==="object"?safeUrl(l.url):""; if(!u){ W(sp+".link["+li+"]","This link was skipped. It needs a web address in url."); return; }
+    resources.push({id:id+"-l"+li,type:"link",label:vStr(l.label)||u,url:u,yt:isYT(u)?1:0,locked:1});
+  });
+  let scene=vStr(s.pic||s.scene);
+  if(!teacher && !scene){ W(sp+".pic","No picture idea. Add one sentence about who is doing what."); scene="Kids in an elementary PE class: "+T+"."; }
+  const short=vStr(s.short)||(t==="game"&&goal?goal:(say[0]||T));
+  return { id, type:t, min, title:T, kick:SLIDE_TYPES[t]+(min?" · "+min+" min":""), big, say, doit, script:steps, short,
+    teks:vArr(s.tek||s.teks), scene:teacher?"":scene, style:vStr(s.style)||ctx.style, video:vStr(s.clip), teacher, tool:(s.tool==="math"?"math":""), key:false, resources };
+}
+
+/* ---------- a whole lesson from a v2 file ---------- */
+function buildLessonV2(o,R){
+  const E=(path,msg)=>R.errors.push({path,msg}), W=(path,msg)=>R.warnings.push({path,msg});
+  const L={ title:vStr(o.title), date:vStr(o.date).slice(0,10), short:vStr(o.short), teks:vArr(o.tek||o.teks), grades:[], words:null };
+  if(!L.title) E("title","The lesson needs a title.");
+  if(!L.short) W("short","Add a 2 or 3 sentence summary a substitute can read in 20 seconds.");
+  const style=vStr(o.style);
+  if(!style) W("style",'No picture style. Add one short phrase, like "bright friendly cartoon, flat colors".');
+  const gl=Array.isArray(o.grades)?o.grades:[];
+  if(!gl.length) E("grades","The lesson needs at least one grade with slides.");
+  const usedKey={}, usedId={};
+  gl.slice(0,8).forEach((g,gi)=>{
+    const gp="grades["+gi+"]";
+    if(!g||typeof g!=="object"){ E(gp,"This grade is not filled in right."); return; }
+    let key=vStr(g.k||g.key,"g"+(gi+1)).replace(/[^A-Za-z0-9]/g,"")||("g"+(gi+1)); while(usedKey[key]) key+="x"; usedKey[key]=1;
+    const label=vStr(g.name||g.label,key)||key;
+    const sl=Array.isArray(g.slides)?g.slides:[];
+    if(!sl.length){ E(gp+".slides",'"'+label+'" has no slides.'); return; }
+    const slides=[];
+    sl.slice(0,60).forEach((s,si)=>{ const x=expandSlide(s,gp+".slides["+si+"]",{key,si,style,E,W,usedId}); if(x) slides.push(x); });
+    if(slides.length && !slides.some(x=>!x.teacher)) E(gp+".slides","Every slide is prep. Kids need at least one slide to see.");
+    if(slides.length && !slides[0].teacher) W(gp+".slides[0]","The first slide is not a prep slide. A prep slide first helps a substitute.");
+    if(!vStr(g.cast)) W(gp+".cast","No cast. Add 1 or 2 sentences about the characters in the pictures, or leave it empty on purpose.");
+    L.grades.push({key,label,cast:vStr(g.cast),setting:vStr(g.setting),slides});
+  });
+  if(JSON.stringify(L).length>240000) E("file","This lesson is too big to save. Ask the AI for shorter scripts.");
+  R.kind="lesson"; R.lesson=L; R.summary=lessonSummary(L);
+}
+function lessonSummary(L){
+  const teks=[]; const add=a=>(a||[]).forEach(x=>{ if(!teks.includes(x)) teks.push(x); });
+  add(L.teks); L.grades.forEach(g=>g.slides.forEach(s=>add(s.teks)));
+  return { title:L.title, teks, grades:L.grades.map(g=>({ label:g.label, total:g.slides.length, prep:g.slides.filter(s=>s.teacher).length, min:g.slides.reduce((a,s)=>a+(s.min||0),0) })) };
+}
+
+/* ---------- check a pasted file: nothing is saved here ---------- */
+function parseImport(text){
+  const R={ ok:false, kind:"", errors:[], warnings:[], fixes:[], lesson:null, backup:null, summary:null };
+  const P=looseParse(String(text||""));
+  if(P.err){ R.errors.push({path:"file",msg:P.err}); return R; }
+  R.fixes=P.fixes; const o=P.obj;
+  if(!o||typeof o!=="object"||Array.isArray(o)){ R.errors.push({path:"file",msg:"That is not a Lily Path file."}); return R; }
+  if(o.format==="lily-path-backup-v1"){
+    R.kind="backup"; R.backup=o;
+    R.summary={ title:"Backup", lessons:Object.keys(o.lessons||{}).length, runs:Object.keys(o.runs||{}).length };
+    R.ok=true; return R;
+  }
+  if(o.format==="lily-path-lesson-v1"){
+    try{ R.lesson=normalizeLesson(o); R.kind="lesson"; R.summary=lessonSummary(R.lesson); R.warnings.push({path:"file",msg:"This is the older file format. It works. New files should start with \"lily\": 2."}); }
+    catch(e){ R.errors.push({path:"file",msg:e.message}); }
+    R.ok=!R.errors.length; return R;
+  }
+  if(o.lily!==2){ R.errors.push({path:"lily",msg:'The file must start with "lily": 2.'}); return R; }
+  const kind=vStr(o.kind,"lesson")||"lesson";
+  if(kind!=="lesson"){ R.errors.push({path:"kind",msg:'"'+kind+'" files are not supported yet. Ask the chat for one lesson at a time.'}); return R; }
+  buildLessonV2(o,R);
+  R.ok=!R.errors.length; return R;
+}
+function fixRequest(P){
+  const out=["Lily Path checked my file. Please fix these problems and send the COMPLETE file again in one code block. Change nothing else.",""];
+  const line=(x,i)=>(i+1)+". "+x.path+": "+x.msg;
+  if(P.errors.length){ out.push("MUST FIX"); P.errors.forEach((x,i)=>out.push(line(x,i))); out.push(""); }
+  if(P.warnings.length){ out.push("SHOULD FIX"); P.warnings.forEach((x,i)=>out.push(line(x,i))); }
+  return out.join("\n").trim();
+}
+async function saveImport(){
+  const P=PEND; if(!P||!P.ok) return;
+  if(P.kind==="backup"){ HMSG={text:await restoreBackup(P.backup)}; }
+  else{
+    const L=P.lesson; L.id=uid("L"); await Store.put("lessons",L.id,L);
+    S.lessonId=L.id; S.grade=null; S.runId=null; S.tab="slides"; save(); HMSG={text:"Lesson added: "+L.title};
+  }
+  PEND=null; delete D.impText;
+}
+
+/* ---------- the preview box ---------- */
+function previewHTML(P){
+  if(!P) return "";
+  let h='<div class="pv" id="impPreview">';
+  if(P.summary && P.kind==="lesson"){
+    const g=P.summary.grades;
+    h+='<h3>'+esc(P.summary.title||"Untitled")+'</h3><ul>'
+      +g.map(x=>'<li><b>'+esc(x.label)+'</b>: '+x.total+' slide'+(x.total===1?"":"s")+(x.prep?' ('+x.prep+' prep)':'')+(x.min?', about '+x.min+' min':'')+'</li>').join("")
+      +(P.summary.teks.length?'<li><b>TEKS:</b> '+P.summary.teks.map(esc).join(", ")+'</li>':'<li><b>TEKS:</b> none listed</li>')+'</ul>';
+  } else if(P.kind==="backup"){
+    h+='<h3>Backup</h3><ul><li>'+P.summary.lessons+' lesson'+(P.summary.lessons===1?"":"s")+'</li><li>'+P.summary.runs+' class score'+(P.summary.runs===1?"":"s")+'</li></ul>';
+  }
+  if(P.fixes.length) h+='<p class="mini">Fixed automatically: '+esc(P.fixes.join(", "))+'.</p>';
+  if(P.errors.length) h+='<h3 class="bad">Must fix ('+P.errors.length+')</h3><ul>'+P.errors.map(x=>'<li class="bad"><b>'+esc(x.path)+'</b> '+esc(x.msg)+'</li>').join("")+'</ul>';
+  if(P.warnings.length) h+='<details'+(P.errors.length?'':' open')+'><summary class="warn">Suggestions ('+P.warnings.length+')</summary><ul>'+P.warnings.map(x=>'<li><b>'+esc(x.path)+'</b> '+esc(x.msg)+'</li>').join("")+'</ul></details>';
+  if(P.ok && !P.errors.length && !P.warnings.length) h+='<p class="good">Looks great.</p>';
+  h+='<div class="row" style="margin-top:10px">'
+    +(P.ok?'<button class="btn primary" data-act="saveimport">Save to Lily Path</button>':'')
+    +'<button class="btn small" data-act="clearimport">Clear</button></div>';
+  if(P.errors.length||P.warnings.length) h+=prefBlock("pFix",fixRequest(P),"Fix request: paste this into your AI chat");
+  return h+'</div>';
+}
+</script>
+<script>
+"use strict";
+/* ---------- small shared bits ---------- */
+const ARM = {};            // two-tap delete arming
+const D = {};              // text typed in boxes, kept across redraws
+let HMSG = null;           // message under the import box
+const DRAFT_IDS = ["partText","partNote","noteText","noteCat","resType","resLabel","resUrl","impText","themeText","runLabel","revText"];
+const starStr = n=> n==null ? "—" : "★".repeat(n)+"☆".repeat(5-n);
+const clearSlideDrafts = ()=>{ ["partText","partNote","noteText","resLabel","resUrl"].forEach(k=>{ delete D[k]; }); };
+const dv = id=> (D[id]!==undefined ? D[id] : "");
+function prefBlock(id,text,label,extra){
+  return '<div class="copyhead"><span>'+esc(label)+'</span><button class="btn small" data-act="copy" data-target="'+id+'">Copy</button></div><pre class="copybox" id="'+id+'" tabindex="0">'+esc(text)+'</pre>'+(extra||"");
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const L=LS(), cloud=Store.mode==="cloud";
+  const th=(LIB.settings&&LIB.settings.theme)||{mode:"none",text:""};
+  const thNow = th.mode==="custom"&&th.text ? th.text : (th.mode==="random" ? "Random (a different one for each picture)" : "No theme");
+  const lessons=Object.values(LIB.lessons).sort((a,b)=>(b.builtin?1:0)-(a.builtin?1:0));
+  const stat = cloud ? '<span class="status ok">Cloud save is on</span>' : '<span class="status">Saved in this browser only</span>';
+  const noUp = cloud && !Store.canUpload ? ' <span class="status">View and score only</span>' : '';
+
+  const items = lessons.map(x=>{
+    const armed = ARM["l:"+x.id];
+    const here = x.id===S.lessonId;
+    return '<li class="item" style="flex-wrap:wrap"><div style="flex:1 1 220px"><b>'+esc(x.title)+'</b>'+(here?' <span class="cat">Open now</span>':'')
+      +'<small>'+esc(x.grades.map(g=>g.label).join(", "))+(x.date?' · '+esc(x.date):'')+'</small>'
+      +(x.short?'<small>'+esc(x.short)+'</small>':'')+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto">'
+      +'<button class="btn small primary" data-act="openlesson" data-id="'+esc(x.id)+'">Open</button>'
+      +'<button class="btn small" data-act="copylesson" data-id="'+esc(x.id)+'">Copy file</button>'
+      +(x.builtin?'':'<button class="btn small" data-act="dellesson" data-id="'+esc(x.id)+'">'+(armed?'Tap again to delete':'Delete')+'</button>')
+      +'</div></li>';
+  }).join("");
+
+  const msg = HMSG ? '<div class="msg '+(HMSG.bad?'bad':'good')+'" role="status">'+esc(HMSG.text)+'</div>' : '';
+
+  const backupHelp = cloud
+    ? '<p>Cloud save is on, so your lessons, notes and scores sync across your devices. Away from work? Open this same page on your phone, go to a slide, scroll to <b>Resources</b>, and add a link or file. It will be there when you get to work.</p>'
+    : '<p>Cloud save is not on, so everything is saved in this browser only. To use something on another device, save a backup file here, then open Lily Path there and paste it into <b>Add a lesson</b>.</p>';
+
+  $("#view-home").innerHTML =
+    '<div class="hero"><h1>Lily Path</h1><p>Build the lesson. Run the class. Rate every section. Compare your classes.</p>'
+    +'<div class="row" style="margin-top:12px">'+stat+noUp+'<button class="btn primary" data-act="tab" data-tab="slides">Open slides: '+esc(L.title)+'</button></div></div>'
+    +'<div class="hgrid">'
+
+    +'<section class="card span"><h2>Your lessons</h2><ul class="list">'+items+'</ul></section>'
+
+    +'<section class="card"><h2>Picture theme</h2><p>Pick a theme and a small piece of it is added to every picture prompt. Choose Random for a surprise on each slide.</p>'
+    +'<div class="row"><button class="btn small" data-act="theme" data-mode="none" aria-pressed="'+(th.mode==="none"||!th.mode)+'">No theme</button>'
+    +'<button class="btn small" data-act="theme" data-mode="random" aria-pressed="'+(th.mode==="random")+'">Random</button></div>'
+    +'<form class="frm" data-form="theme"><label class="f">Or type your own<input type="text" id="themeText" placeholder="dogs and cats" value="'+esc(D.themeText!==undefined?D.themeText:(th.mode==="custom"?th.text:""))+'"></label><div><button class="btn small primary" type="submit">Use this theme</button></div></form>'
+    +'<div class="pp">'+THEMES.slice(0,8).map(t=>'<button class="btn small" data-act="themepick" data-text="'+esc(t)+'">'+esc(t)+'</button>').join("")+'</div>'
+    +'<p class="note">Right now: <b>'+esc(thNow)+'</b></p></section>'
+
+    +'<section class="card"><h2>Add a lesson</h2><p>Paste the file the AI gave you, then tap <b>Check</b>. You see a preview first. Nothing saves until you tap Save.</p>'
+    +'<form class="frm" data-form="import"><textarea id="impText" placeholder="Paste here" style="min-height:120px">'+esc(dv("impText"))+'</textarea>'
+    +'<div class="row"><label class="btn small" style="cursor:pointer;flex:0 0 auto">Pick a file<input type="file" id="impFile" accept=".json,.txt,application/json,text/plain" hidden></label><button class="btn primary small" type="submit" style="flex:0 0 auto">Check</button></div></form>'+msg+previewHTML(PEND)+'</section>'
+
+    +'<section class="card span"><h2>Make a new lesson with AI</h2><p>No tech skills needed. The AI interviews you, gives feedback, suggests resources and standards, then writes the script and the lesson file.</p>'
+    +'<ol class="wizsteps"><li><div>Tap <b>Copy</b> on the box below.</div></li><li><div>Open any AI chat (Claude, ChatGPT or Gemini) and paste it in. Send it.</div></li><li><div>Answer its questions, one at a time. "I am not sure" is a fine answer.</div></li><li><div>At the end it gives you a <b>MASTER PROMPT</b> and a <b>LESSON FILE</b>. Save the master prompt somewhere. Copy the lesson file.</div></li><li><div>Come back here, paste it into <b>Add a lesson</b>, and tap the button.</div></li></ol>'
+    +prefBlock("pWizard",WIZARD_PROMPT,"Setup prompt for any AI")+'</section>'
+
+    +'<section class="card span"><h2>Explain the plan to any AI</h2><p>Copy this into an AI chat. It explains the whole day back to you in detail: steps, prep, what could go wrong, and what is missing. It uses the lesson that is open: <b>'+esc(L.title)+'</b>.</p>'
+    +prefBlock("pPlan",planText(),"Plan prompt for any AI")+'</section>'
+
+    +'<section class="card span"><h2>Back up and move things</h2>'+backupHelp
+    +'<div class="row"><button class="btn small primary" data-act="export">Save backup file</button><button class="btn small" data-act="exporttext">Show backup text</button></div>'
+    +(S.exportText?prefBlock("pBackup",S.exportText,"Backup text (copy and keep it)"):'')
+    +'<p class="note">The backup holds your lessons, parts, links, class scores and theme. Pictures and uploaded files are not inside it.</p></section>'
+    +'</div>';
+}
+
+/* ---------- REVIEW ---------- */
+function slideIndex(L){ const m={}; L.grades.forEach(g=>g.slides.forEach(s=>{ m[s.id]={s,g}; })); return m; }
+function summaryText(L,r){
+  const sc=runScore(r,L), idx=slideIndex(L); const out=[];
+  out.push("LESSON: "+L.title); out.push("CLASS: "+r.label+(r.date?" ("+r.date+")":""));
+  out.push("SCORE: "+(sc.score==null?"not rated yet":sc.score+" / 100 (average "+(Math.round(sc.avg*100)/100)+" of 5 stars, "+sc.rated+" of "+sc.total+" sections rated)"));
+  out.push("\nSECTIONS");
+  L.grades.forEach(g=>g.slides.forEach(s=>{ if(s.teacher) return; const n=r.ratings[s.id]; out.push("- "+g.label+" | "+s.title+": "+(typeof n==="number"?starStr(n)+" ("+n+"/5)":"not rated")); }));
+  const notes=r.notes.slice().sort((a,b)=>CATS.indexOf(a.cat)-CATS.indexOf(b.cat)||a.at-b.at);
+  if(notes.length){ out.push("\nNOTES"); notes.forEach(n=>{ const x=idx[n.slideId]; out.push("- ["+n.cat+"] "+n.text+(x?" ("+x.g.label+" | "+x.s.title+")":"")); }); }
+  if(r.review) out.push("\nOVERALL REVIEW\n"+r.review);
+  return out.join("\n");
+}
+function renderReview(){
+  const L=LS(), runs=runsFor(L.id), el=$("#view-review"), idx=slideIndex(L);
+  const head='<div class="hero"><h1>Review</h1><p>'+esc(L.title)+'. Score = average stars of the rated sections x 20. Rate the same sections in every class so scores compare fairly.</p></div>';
+  if(!runs.length){
+    el.innerHTML = head+'<div class="hgrid"><section class="card span"><h2>No classes scored yet</h2><p>Open <b>Slides</b>, make a class (like K Period 2), then tap stars and add notes on any section.</p><button class="btn primary" data-act="tab" data-tab="slides">Go to slides</button></section></div>';
+    return;
+  }
+  const sel = runs.find(r=>r.id===S.revRun) ? S.revRun : "all";
+  const picker='<div class="row" style="margin-top:12px"><label class="f" style="min-width:220px">Class<select id="revSel"><option value="all"'+(sel==="all"?" selected":"")+'>All classes (compare)</option>'+runs.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===sel?" selected":"")+'>'+esc(r.label)+'</option>').join("")+'</select></label></div>';
+  let h=head+picker+'<div class="hgrid">';
+
+  if(sel!=="all"){
+    const r=runs.find(x=>x.id===sel), sc=runScore(r,L);
+    h+='<section class="card"><h2>'+esc(r.label)+'</h2><p class="mini">'+esc(r.date||"")+'</p>'
+      +'<div class="scorebig">'+(sc.score==null?"—":sc.score)+'<span class="mini"> / 100</span></div>'
+      +'<p>'+(sc.score==null?"No stars yet.":"Average "+(Math.round(sc.avg*100)/100)+" of 5 stars. ")+sc.rated+' of '+sc.total+' sections rated.</p>'
+      +'<div class="row"><button class="btn small primary" data-act="copysummary">Copy summary</button><button class="btn small" data-act="delrun" data-id="'+esc(r.id)+'">'+(ARM["r:"+r.id]?"Tap again to delete":"Delete class")+'</button></div></section>';
+    h+='<section class="card"><h2>Overall review</h2><form class="frm" data-form="review"><label class="f">Your words about this class<textarea id="revText" placeholder="What went well? What would you change next time?">'+esc(D.revText!==undefined?D.revText:(r.review||""))+'</textarea></label><div><button class="btn small primary" type="submit">Save review</button></div></form></section>';
+    const rows=[]; L.grades.forEach(g=>g.slides.forEach(s=>{ if(s.teacher) return; const n=r.ratings[s.id]; const c=r.notes.filter(x=>x.slideId===s.id).length;
+      rows.push('<tr><td>'+esc(s.title)+'</td><td>'+esc(g.label)+'</td><td><span class="starsline">'+esc(starStr(typeof n==="number"?n:null))+'</span></td><td>'+(c||"")+'</td></tr>'); }));
+    h+='<section class="card span"><h2>Sections</h2><div class="scroll"><table class="tbl"><thead><tr><th>Section</th><th>Grade</th><th>Stars</th><th>Notes</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
+    const notes=r.notes.slice().sort((a,b)=>CATS.indexOf(a.cat)-CATS.indexOf(b.cat)||a.at-b.at);
+    const counts=CATS.map(c=>({c,n:notes.filter(x=>x.cat===c).length})).filter(x=>x.n);
+    h+='<section class="card span"><h2>Notes ('+notes.length+')</h2>'
+      +(counts.length?'<div class="pp" style="margin:0 0 10px">'+counts.map(x=>'<span class="cat">'+esc(x.c)+' '+x.n+'</span>').join("")+'</div>':'')
+      +(notes.length?'<ul class="list">'+notes.map(n=>{ const x=idx[n.slideId]; return '<li class="item"><div><span class="cat">'+esc(n.cat)+'</span> '+esc(n.text)+'<small>'+(x?esc(x.g.label+" · "+x.s.title):"")+'</small></div></li>'; }).join("")+'</ul>':'<p class="note">No notes yet.</p>')+'</section>';
+  }
+
+  if(runs.length>1 || sel==="all"){
+    const rows=runs.map(r=>{ const sc=runScore(r,L); return '<tr><td>'+esc(r.label)+'</td><td>'+esc(r.date||"")+'</td><td><b>'+(sc.score==null?"—":sc.score)+'</b></td><td>'+sc.rated+'/'+sc.total+'</td><td>'+r.notes.length+'</td></tr>'; }).join("");
+    const scored=runs.map(r=>runScore(r,L).score).filter(x=>x!=null);
+    const avg=scored.length? Math.round(scored.reduce((a,b)=>a+b,0)/scored.length*10)/10 : null;
+    h+='<section class="card span"><h2>Compare classes</h2><div class="scroll"><table class="tbl"><thead><tr><th>Class</th><th>Date</th><th>Score</th><th>Rated</th><th>Notes</th></tr></thead><tbody>'+rows
+      +(avg!=null?'<tr><td><b>Average</b></td><td></td><td><b>'+avg+'</b></td><td></td><td></td></tr>':'')+'</tbody></table></div></section>';
+    const secs=[]; L.grades.forEach(g=>g.slides.forEach(s=>{ if(s.teacher) return; const v=runs.map(r=>r.ratings[s.id]).filter(n=>typeof n==="number"); if(v.length) secs.push({t:g.label+" · "+s.title,a:v.reduce((x,y)=>x+y,0)/v.length,n:v.length}); }));
+    secs.sort((a,b)=>a.a-b.a);
+    if(secs.length) h+='<section class="card span"><h2>Sections, lowest first</h2><p class="mini">Average stars across classes. The top rows are the ones to fix.</p><div class="scroll"><table class="tbl"><thead><tr><th>Section</th><th>Average</th><th>Classes</th></tr></thead><tbody>'+secs.map(x=>'<tr><td>'+esc(x.t)+'</td><td>'+(Math.round(x.a*10)/10)+' of 5</td><td>'+x.n+'</td></tr>').join("")+'</tbody></table></div></section>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+/* ---------- WORDS & STORY ---------- */
+const WS = ()=> (S.wstate[S.lessonId] || (S.wstate[S.lessonId]={earned:[]}));
+function wordPool(){ const W=LS().words; if(!W) return []; const e=WS().earned; return W.bank.filter(b=>b.l===S.level+1 && !e.includes(b.w) && (!S.storyOnly || b.s)); }
+function drawWord(){
+  const pool=wordPool();
+  if(!pool.length){ S.cur=null; S.shown=false; toast(S.storyOnly?"All story words at this level are earned. Try another level.":"All words at this level are earned."); return; }
+  S.cur=pool[Math.floor(Math.random()*pool.length)]; S.shown=false;
+}
+function earnWord(){ if(!S.cur) return; const e=WS().earned; if(!e.includes(S.cur.w)) e.push(S.cur.w); S.cur=null; S.shown=false; save(); }
+function renderWords(){
+  const L=LS(), W=L.words;
+  $("#noWords").hidden=!!W; $("#wgrid").hidden=!W; $("#bank").hidden=!W;
+  if(!W) return;
+  const e=WS().earned;
+  if(S.level>=W.levels.length) S.level=0;
+  $("#lvBtns").innerHTML = W.levels.map((n,i)=>'<button class="btn small" data-act="level" data-i="'+i+'" aria-pressed="'+(i===S.level)+'">'+esc(n)+'</button>').join("");
+  $("#storyOnly").setAttribute("aria-pressed",String(S.storyOnly));
+  const p=$("#patt");
+  if(S.cur){ p.className="patt"; p.textContent=(S.shown?S.cur.w:S.cur.p.toUpperCase()); } else { p.className="patt empty"; p.textContent="Tap Draw word"; }
+  $("#revealBtn").disabled=!S.cur||S.shown; $("#earnedBtn").disabled=!S.cur;
+  const pool=wordPool();
+  $("#pickNote").textContent = S.cur ? (S.cur.s?"This word is in the story.":"Bonus word. It is not in the story.") : (pool.length+" word"+(pool.length===1?"":"s")+" left at this level.");
+  $("#storyTitle").textContent=W.storyTitle;
+  const parts=String(W.storyText).split(/\{\{([A-Za-z]+)\}\}/); let total=0, got=0, html="";
+  parts.forEach((t,i)=>{
+    if(i%2===0){ html+=esc(t); return; }
+    const w=t.toUpperCase(); total++;
+    if(e.includes(w)){ got++; html+='<span class="y">'+esc(w)+'</span>'; }
+    else html+= S.read ? '<span class="blank">BLEEP</span>' : '<span class="blank" aria-label="blank">&nbsp;</span>';
+  });
+  $("#story").innerHTML=html;
+  $("#storyCount").textContent=got+" of "+total+" words";
+  $("#readMode").setAttribute("aria-pressed",String(S.read));
+  $("#bank").innerHTML = W.levels.map((n,i)=>{
+    const ws=W.bank.filter(b=>b.l===i+1);
+    return '<div class="lv'+(i+1)+'"><h3>'+esc(n)+'</h3><ul>'+ws.map(b=>'<li><button class="w'+(e.includes(b.w)?" done":"")+'" data-act="pick" data-w="'+esc(b.w)+'"><b>'+esc(b.w)+'</b><span class="p">'+esc(b.p)+'</span></button></li>').join("")+'</ul></div>';
+  }).join("");
+}
+</script>
+<script>
+"use strict";
+/* ---------- draw everything ---------- */
+function syncResType(){
+  const t=document.getElementById("resType"); if(!t) return;
+  const link=t.value==="link";
+  const u=document.getElementById("resUrlWrap"), f=document.getElementById("resFileWrap"), fi=document.getElementById("resFile");
+  if(u) u.hidden=!link; if(f) f.hidden=link;
+  if(fi) fi.accept=({audio:"audio/*,.mp3,.m4a,.wav",video:"video/mp4,video/webm,.mp4,.webm",gif:"image/gif,image/*"})[t.value]||"";
+}
+function restoreDrafts(aid,ss,se){
+  DRAFT_IDS.forEach(id=>{ const el=document.getElementById(id); if(el && D[id]!==undefined && el.value!==D[id]) el.value=D[id]; });
+  syncResType();
+  if(aid && (DRAFT_IDS.includes(aid)||aid==="runSel"||aid==="revSel")){
+    const el=document.getElementById(aid);
+    if(el && el!==document.activeElement){ try{ el.focus({preventScroll:true}); if(ss!=null&&el.setSelectionRange) el.setSelectionRange(ss,se); }catch(e){} }
+  }
+}
+function render(){
+  const ae=document.activeElement, aid=ae&&ae.id, ss=ae&&ae.selectionStart, se=ae&&ae.selectionEnd;
+  ["home","slides","words","review"].forEach(t=>{
+    $("#view-"+t).hidden = S.tab!==t;
+    $("#tab-"+t).setAttribute("aria-selected",String(S.tab===t));
+  });
+  document.body.classList.toggle("present", !!(S.present && S.tab==="slides"));
+  $("#btnPresent").setAttribute("aria-pressed",String(!!S.present));
+  $("#btnScript").setAttribute("aria-pressed",String(S.script));
+  $("#brandSub").textContent=LS().title;
+  if(S.tab==="home") renderHome();
+  else if(S.tab==="slides"){ renderSlides(); $("#teacher").hidden=!S.script; }
+  else if(S.tab==="words") renderWords();
+  else if(S.tab==="review") renderReview();
+  restoreDrafts(aid,ss,se);
+}
+
+/* ---------- clicks ---------- */
+const slideNow = ()=>({L:LS(), sl:cur()});
+function armTwice(key){
+  if(!ARM[key]){ ARM[key]=1; setTimeout(()=>{ delete ARM[key]; render(); },4000); return false; }
+  delete ARM[key]; return true;
+}
+const ACT = {
+  tab(b){ S.tab=b.dataset.tab; if(S.tab!=="slides") S.present=false; window.scrollTo(0,0); },
+  script(){ S.script=!S.script; save(); },
+  present(){ if(!S.present){ S.tab="slides"; S.present=true; window.scrollTo(0,0); } else S.present=false; },
+  prev(){ go(-1); return false; },
+  next(){ go(1); return false; },
+  goto(b){ S.idx[idxKey()]=parseInt(b.dataset.i,10)||0; clearSlideDrafts(); save(); },
+  grade(b){ S.grade=b.dataset.k; clearSlideDrafts(); save(); },
+  copy(b){ const el=document.getElementById(b.dataset.target); if(el) copyText(el.textContent,el); return false; },
+  rate(b){ rate(cur().id,parseInt(b.dataset.n,10)); },
+  delnote(b){ delNote(b.dataset.id); },
+  delpart(b){ removePart(S.lessonId,cur().id,b.dataset.id); },
+  delres(b){ removeRes(S.lessonId,cur().id,b.dataset.id).catch(()=>{}); },
+  async playaudio(b){
+    const it=allRes(LS(),cur()).find(r=>r.id===b.dataset.id); if(!it) return false;
+    toast("Loading audio");
+    try{ await loadAudio(it); }catch(e){ toast("This page could not play that audio. Turn it into an mp4 and add it as Video."); return false; }
+  },
+  showrunform(){ const f=$("#runForm"); if(f){ f.hidden=!f.hidden; if(!f.hidden){ const i=$("#runLabel"); if(i) i.focus(); } } return false; },
+  openlesson(b){ S.lessonId=b.dataset.id; S.grade=null; S.runId=null; S.cur=null; S.shown=false; S.revRun="all"; S.tab="slides"; clearSlideDrafts(); save(); window.scrollTo(0,0); },
+  copylesson(b){ const L=LIB.lessons[b.dataset.id]; if(L) copyText(lessonJSON(L)); return false; },
+  async dellesson(b){
+    const id=b.dataset.id; if(!armTwice("l:"+id)) return;
+    try{
+      await Store.del("lessons",id);
+      for(const rid of Object.keys(LIB.runs)) if(LIB.runs[rid].lessonId===id) await Store.del("runs",rid);
+      if(LIB.res[id]) await Store.del("res",id);
+    }catch(e){ fail(); }
+    if(S.lessonId===id){ S.lessonId="oct22"; S.grade=null; S.runId=null; }
+    save();
+  },
+  theme(b){ setTheme(b.dataset.mode,""); delete D.themeText; },
+  themepick(b){ setTheme("custom",b.dataset.text); delete D.themeText; },
+  async export(){
+    const text=JSON.stringify(backupObj(),null,2);
+    if(Store.dl){
+      try{ await Store.dl.save({filename:"lily-path-backup-"+new Date().toISOString().slice(0,10)+".json",data:text}); toast("Backup ready"); return false; }
+      catch(e){ if(e&&e.code==="declined") return false; }
+    }
+    S.exportText=text;
+  },
+  exporttext(){ S.exportText=JSON.stringify(backupObj(),null,2); },
+  delrun(b){
+    const id=b.dataset.id; if(!armTwice("r:"+id)) return;
+    Store.del("runs",id).catch(fail); if(S.runId===id) S.runId=null; S.revRun="all"; save();
+  },
+  async saveimport(){ try{ await saveImport(); }catch(e){ HMSG={bad:1,text:(e&&e.message)||"Could not save that."}; } },
+  clearimport(){ PEND=null; HMSG=null; delete D.impText; },
+  copysummary(){ const r=runsFor(S.lessonId).find(x=>x.id===S.revRun); if(r) copyText(summaryText(LS(),r)); return false; },
+  /* words */
+  draw(){ drawWord(); },
+  reveal(){ S.shown=true; },
+  earned(){ earnWord(); },
+  level(b){ S.level=parseInt(b.dataset.i,10)||0; S.cur=null; S.shown=false; save(); },
+  storyonly(){ S.storyOnly=!S.storyOnly; S.cur=null; S.shown=false; save(); },
+  readmode(){ S.read=!S.read; },
+  reset(){ WS().earned=[]; S.cur=null; S.shown=false; save(); },
+  pick(b){ const W=LS().words; const w=W&&W.bank.find(x=>x.w===b.dataset.w); if(w){ S.cur=w; S.shown=false; } },
+  /* math */
+  mnew(){ mathNew(); },
+  mshow(){ if(!M.q) mathNew(); M.show=true; },
+  mmax(){ M.max = M.max===5 ? 10 : (M.max===10 ? 20 : 5); mathNew(); },
+  /* images */
+  rmimg(){ imgDel(imgKey(LS(),cur())).then(render).catch(()=>{}); }
+};
+document.addEventListener("click",async ev=>{
+  const b=ev.target.closest("[data-act]"); if(!b) return;
+  const fn=ACT[b.dataset.act]; if(!fn) return;
+  let r; try{ r=await fn(b,ev); }catch(e){ fail(); }
+  if(r!==false) render();
+});
+
+/* ---------- forms ---------- */
+const FORMS = {
+  run(f){ const i=$("#runLabel"); newRun(i?i.value:""); delete D.runLabel; const rf=$("#runForm"); if(rf) rf.hidden=true; },
+  part(){
+    const t=($("#partText").value||"").trim(); if(!t) return;
+    addPart(S.lessonId,cur().id,t,($("#partNote").value||"").trim()); delete D.partText; delete D.partNote;
+  },
+  note(){
+    const t=($("#noteText").value||"").trim(); if(!t) return;
+    addNote(cur().id,$("#noteCat").value,t); delete D.noteText;
+  },
+  async res(){
+    const type=$("#resType").value, label=($("#resLabel").value||"").trim(), lid=S.lessonId, sid=cur().id;
+    if(type==="link"){
+      if(!addLinkRes(lid,sid,$("#resUrl").value,label)){ toast("That link does not look right."); return false; }
+    } else {
+      const file=$("#resFile").files[0]; if(!file){ toast("Pick a file first."); return false; }
+      toast("Adding file");
+      try{ await addFileRes(lid,sid,type,file,label); }
+      catch(e){ toast(e&&e.code==="too_large" ? "That file is too big. Try one under about 14 MB." : (e&&e.code==="not_granted" ? "Only the owner can add files." : "Could not add that file.")); return false; }
+    }
+    delete D.resLabel; delete D.resUrl;
+  },
+  theme(){ const t=($("#themeText").value||"").trim(); setTheme(t?"custom":"none",t); delete D.themeText; },
+  import(){
+    const t=($("#impText").value||"").trim(); HMSG=null;
+    if(!t){ PEND=null; HMSG={bad:1,text:"Paste something first."}; return; }
+    PEND=parseImport(t);
+  },
+  review(){
+    const r=runsFor(S.lessonId).find(x=>x.id===S.revRun); if(!r) return;
+    r.review=($("#revText").value||"").trim(); persistRun(r); delete D.revText; toast("Saved");
+  }
+};
+document.addEventListener("submit",async ev=>{
+  const f=ev.target.closest("[data-form]"); if(!f) return;
+  ev.preventDefault();
+  let r; try{ r=await FORMS[f.dataset.form](f); }catch(e){ fail(); }
+  if(r!==false) render();
+});
+
+/* ---------- typing, picking, files ---------- */
+function onField(ev){
+  const t=ev.target; if(!t || !t.id) return;
+  if(DRAFT_IDS.includes(t.id)) D[t.id]=t.value;
+  if(t.id==="impText" && PEND){ PEND=null; const pv=document.getElementById("impPreview"); if(pv) pv.hidden=true; }
+  if(t.id==="resType") syncResType();
+}
+document.addEventListener("input",onField);
+document.addEventListener("change",async ev=>{
+  onField(ev);
+  const t=ev.target; if(!t || !t.id) return;
+  if(t.id==="runSel"){ S.runId=t.value||null; save(); render(); }
+  else if(t.id==="revSel"){ S.revRun=t.value; delete D.revText; render(); }
+  else if(t.id==="imgfile" && t.files[0]){
+    toast("Adding image");
+    try{ await imgSet(imgKey(LS(),cur()),t.files[0]); }catch(e){ toast("Could not add that image."); }
+    render();
+  }
+  else if(t.id==="impFile" && t.files[0]){
+    try{ const txt=await t.files[0].text(); D.impText=txt; HMSG=null; PEND=parseImport(txt); }
+    catch(e){ PEND=null; HMSG={bad:1,text:"Could not read that file."}; }
+    render();
+  }
+});
+document.addEventListener("keydown",ev=>{
+  const tg=ev.target&&ev.target.tagName;
+  if(/INPUT|TEXTAREA|SELECT/.test(tg||"")) return;
+  if(ev.key==="Escape" && S.present){ S.present=false; render(); }
+  else if(S.tab==="slides" && !ev.metaKey && !ev.ctrlKey && !ev.altKey){
+    if(ev.key==="ArrowRight"){ go(1); }
+    else if(ev.key==="ArrowLeft"){ go(-1); }
+  }
+});
+
+/* ---------- start ---------- */
+render();
+Store.init(()=>{ render(); });
+</script>
+
+</body></html>
